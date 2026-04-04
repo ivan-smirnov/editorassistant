@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ассистент для редактора</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0D0D10;
+  --card: #17171B;
+  --card-hover: #1B1B1F;
+  --border: rgba(255,255,255,0.04);
+  --border-hover: rgba(255,255,255,0.08);
+  --text: #EDEDEF;
+  --text-muted: #9B9BA3;
+  --text-dim: #65656D;
+  --accent: #3B82F6;
+  --accent-hover: #2563EB;
+  --red: #EF4444;
+  --yellow: #F59E0B;
+  --green: #22C55E;
+  --orange: #F97316;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+/* SVG ICONS */
+.icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.icon svg { display: block; }
+
+/* HEADER */
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: rgba(13,13,16,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 8px; }
+.header-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.header-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.header-badge { font-size: 12px; color: var(--text-dim); border: 1px solid rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px; }
+
+/* CONTAINER */
+.container { max-width: 1080px; margin: 0 auto; padding: 0 24px; padding-top: 52px; }
+
+/* SCREENS */
+.screen { display: none; opacity: 0; transform: translateY(12px); }
+.screen.active { display: block; }
+.screen.visible { opacity: 1; transform: translateY(0); transition: opacity 0.3s ease, transform 0.3s ease; }
+
+/* INPUT SCREEN */
+.input-screen { padding: 40px 0 80px; }
+.input-wrapper { width: 100%; max-width: 720px; }
+.input-wrapper h1 { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 12px; }
+.input-wrapper .subtitle { font-size: 15px; color: var(--text-muted); margin-bottom: 28px; }
+
+.textarea-main {
+  width: 100%;
+  min-height: 200px;
+  max-height: 400px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+  transition: border-color 0.2s;
+}
+.textarea-main::placeholder { color: var(--text-dim); }
+.textarea-main:focus { border-color: var(--border-hover); }
+
+.input-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; flex-wrap: wrap; gap: 10px; }
+.input-footer-left { display: flex; align-items: center; gap: 14px; }
+.char-count { font-size: 13px; color: var(--text-dim); }
+
+/* BUTTONS */
+.btn-cta {
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+.btn-cta:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 4px 16px rgba(59,130,246,0.2); }
+.btn-cta:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cta .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse-anim 1s ease-in-out infinite; }
+@keyframes pulse-anim { 0%,100%{opacity:.4}50%{opacity:1} }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-hover);
+  color: var(--text-muted);
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+
+.btn-demo {
+  background: transparent;
+  border: 1px dashed var(--border-hover);
+  color: var(--text-dim);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.btn-demo:hover { background: rgba(255,255,255,0.04); color: var(--text-muted); border-color: rgba(255,255,255,0.12); }
+
+/* ANALYSIS SCREEN */
+.analysis-screen { padding: 40px 0 80px; }
+.two-col { display: grid; grid-template-columns: 360px 1fr; gap: 32px; align-items: start; }
+@media (max-width: 768px) { .two-col { grid-template-columns: 1fr; gap: 20px; } }
+
+.col-left h2, .col-right h2 { font-size: 22px; font-weight: 700; line-height: 1.25; margin-bottom: 14px; }
+
+.original-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 14px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.summary-bar { font-size: 14px; font-weight: 500; margin-bottom: 18px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.summary-bar .sep { color: var(--text-dim); }
+.s-green { color: var(--green); }
+.s-yellow { color: var(--yellow); }
+.s-red { color: var(--red); }
+
+.category-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 10px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.2s;
+}
+.category-card.show { opacity: 1; transform: translateY(0); }
+.category-card:hover { border-color: var(--border-hover); }
+
+.cat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cat-title { font-size: 16px; font-weight: 600; }
+
+.badge { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.badge-green { background: rgba(34,197,94,0.12); color: var(--green); }
+.badge-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); }
+.badge-red { background: rgba(239,68,68,0.12); color: var(--red); }
+
+.cat-found { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+.gap-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.gap-item:last-child { margin-bottom: 0; }
+.gap-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+.gap-reason { font-size: 13px; color: var(--text-dim); font-style: italic; margin-top: 2px; line-height: 1.55; }
+
+.contradictions-section { margin-top: 18px; margin-bottom: 10px; }
+.contradiction-card { background: rgba(249,115,22,0.06); border: 1px solid rgba(249,115,22,0.15); border-radius: 14px; padding: 16px 20px; margin-bottom: 8px; }
+.contradiction-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.contradiction-title { font-size: 14px; font-weight: 600; color: var(--orange); }
+.contradiction-body { font-size: 13px; color: var(--text-muted); line-height: 1.6; padding-left: 24px; }
+
+.questions-section { margin-top: 32px; }
+.questions-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 14px; }
+
+.question-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; margin-bottom: 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; transition: border-color 0.2s; }
+.question-card:hover { border-color: var(--border-hover); }
+.q-content { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; }
+.q-num { font-size: 13px; font-weight: 600; color: var(--text-dim); flex-shrink: 0; min-width: 20px; }
+.q-text { font-size: 14px; line-height: 1.6; color: var(--text-muted); }
+
+.btn-copy {
+  background: transparent; border: none; cursor: pointer; color: var(--text-dim);
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px;
+  font-family: 'Inter', sans-serif; flex-shrink: 0; padding: 4px 6px;
+  border-radius: 6px; transition: color 0.2s, background 0.2s; white-space: nowrap;
+}
+.btn-copy:hover { color: var(--text-muted); background: rgba(255,255,255,0.04); }
+
+.copy-all-wrap { margin-top: 14px; margin-bottom: 28px; }
+.cta-bottom { margin-top: 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cta-note { font-size: 13px; color: var(--text-dim); }
+
+.understanding-section { margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border); }
+.understanding-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+.understanding-block { margin-bottom: 16px; }
+.understanding-label { font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.understanding-value { font-size: 14px; line-height: 1.6; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+.understanding-risk { font-size: 13px; line-height: 1.55; color: var(--red); font-style: italic; margin-top: 6px; padding-left: 2px; display: flex; align-items: flex-start; gap: 6px; }
+.copy-understanding-wrap { margin-top: 20px; display: flex; gap: 10px; }
+
+/* SUPPLEMENT SCREEN */
+.supplement-screen { padding: 40px 0 80px; }
+.accordion-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+.accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; cursor: pointer; user-select: none; transition: background 0.2s; }
+.accordion-header:hover { background: var(--card-hover); }
+.accordion-header .cat-title { font-size: 14px; }
+
+.textarea-answers {
+  width: 100%;
+  min-height: 180px;
+  max-height: 360px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+  margin-bottom: 14px;
+  transition: border-color 0.2s;
+}
+.textarea-answers::placeholder { color: var(--text-dim); }
+.textarea-answers:focus { border-color: var(--border-hover); }
+
+@media (max-width: 768px) {
+  .mobile-accordion-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  .mobile-accordion-toggle h2 { font-size: 16px; margin-bottom: 0; }
+  .mobile-accordion-body { display: none; }
+  .mobile-accordion-body.open { display: block; }
+  .col-left-desktop-only { display: none; }
+  .col-left-mobile-only { display: block; }
+}
+@media (min-width: 769px) { .col-left-mobile-only { display: none; } }
+
+.chevron-icon { transition: transform 0.2s; }
+.chevron-icon.rotated { transform: rotate(180deg); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="header-dot"></div>
+    <span class="header-title">Ассистент</span>
+  </div>
+  <span class="header-badge">MVP</span>
+</header>
+
+<div class="container">
+
+  <!-- STATE 1: INPUT -->
+  <div id="screen1" class="screen input-screen active">
+    <div class="input-wrapper">
+      <h1>Проверьте запрос на&nbsp;готовность к&nbsp;работе</h1>
+      <p class="subtitle">Вставьте всё, что&nbsp;получили от&nbsp;клиента: письмо, расшифровку звонка, сообщение из&nbsp;мессенджера. Ассистент покажет, чего не&nbsp;хватает, и&nbsp;соберёт понимание задачи.</p>
+      <textarea id="mainInput" class="textarea-main" placeholder="Напишите статью про наш продукт для HR-директоров. Нам важно показать, что мы лидеры рынка. Дедлайн — пятница."></textarea>
+      <div class="input-footer">
+        <div class="input-footer-left">
+          <span id="charCount" class="char-count">0 символов</span>
+          <button class="btn-demo" id="btnDemo">▶ Вставить демо</button>
+        </div>
+        <button id="btnAnalyze" class="btn-cta" disabled>Разобрать запрос →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 2: ANALYSIS -->
+  <div id="screen2" class="screen analysis-screen">
+    <div class="two-col">
+      <div class="col-left col-left-desktop-only">
+        <h2>Запрос клиента</h2>
+        <div class="original-card" id="originalText"></div>
+        <button class="btn-ghost" id="btnEditDesktop">Изменить запрос</button>
+      </div>
+      <div class="col-left col-left-mobile-only">
+        <div class="mobile-accordion-toggle" id="mobileAccToggle">
+          <h2>Запрос клиента</h2>
+          <span class="chevron-icon" id="mobileChevron">▾</span>
+        </div>
+        <div class="mobile-accordion-body" id="mobileAccBody">
+          <div class="original-card" id="originalTextMobile"></div>
+          <button class="btn-ghost" id="btnEditMobile">Изменить запрос</button>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <h2>Разбор</h2>
+        <div class="summary-bar" id="summaryBar"></div>
+        <div id="contradictionsContainer"></div>
+        <div id="categoriesContainer"></div>
+        <div class="questions-section" id="questionsSection"></div>
+        <div class="cta-bottom">
+          <button class="btn-cta" id="btnAddAnswers">Добавить ответы клиента →</button>
+          <button class="btn-cta" id="btnGenUnderstanding" style="background:var(--green)">Собрать понимание задачи</button>
+        </div>
+        <p class="cta-note" style="margin-top:10px">Повторяйте, пока все категории не&nbsp;станут зелёными.</p>
+        <div id="understandingContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 3: SUPPLEMENT -->
+  <div id="screen3" class="screen supplement-screen">
+    <div class="two-col">
+      <div class="col-left">
+        <h2>Исходный запрос и&nbsp;разбор</h2>
+        <div class="original-card" id="originalTextS3"></div>
+        <div id="accordionS3"></div>
+      </div>
+      <div class="col-right">
+        <h2>Ответы клиента</h2>
+        <textarea id="answersInput" class="textarea-answers" placeholder="Вставьте ответы, которые получили от клиента. Ассистент обновит разбор."></textarea>
+        <button class="btn-cta" id="btnUpdateAnalysis">Обновить разбор →</button>
+        <p class="cta-note" style="margin-top:10px">Повторяйте, пока все категории не&nbsp;станут зелёными.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ====== DEMO TEXT ======
+const DEMO_TEXT = `Нам нужна статья о том, как наше приложение помогает сотрудникам справляться с выгоранием. Целевая аудитория — HR-директора крупных компаний, которые уже столкнулись с проблемой оттока сотрудников из-за стресса и ищут решение.
+
+Сейчас у нас нет контента, который объясняет HR-ам, почему наш подход работает. Конкуренты публикуют кейсы, а мы — нет. Нам нужно это исправить.
+
+Хотим экспертную статью на 8 000–10 000 знаков для блога на сайте. Тон — серьёзный, но не академический. Дедлайн — следующая пятница. Статью нужно написать кратко, буквально на 1 500 знаков.
+
+Согласовывать будет Марина, наш маркетинг-директор. Один раунд правок.`;
+
+// ====== CATEGORIES ======
+const CATEGORIES = [
+  {
+    id: 'context', title: 'Контекст', subtitle: 'предыстория, целевая аудитория, бизнес-задача',
+    markers: [
+      { keywords: ['для кого','ца','аудитори','читател','клиент','пользовател','hr-директор','hr директор','руководител','менеджер','целевая','целевой','сотрудник'], group: 'audience' },
+      { keywords: ['зачем','почему','цель','задача проект','чтобы','важно показать','показать что','донести','бизнес-цел','продажи','привлеч','репутац','издержк'], group: 'purpose' },
+      { keywords: ['запуск','релиз','событи','кампани','мероприяти','конференц','ребрендинг','сейчас у нас','на данный момент','столкнул'], group: 'situation' }
+    ],
+    gaps: [
+      { text: 'Не\u00a0указана целевая аудитория', reason: 'Без\u00a0понимания, кто\u00a0будет читать, невозможно выбрать язык, глубину и\u00a0аргументацию.', forMissing: 'audience' },
+      { text: 'Не\u00a0указана бизнес-задача', reason: 'Непонятно, какую задачу бизнеса решает этот текст.', forMissing: 'purpose' },
+      { text: 'Нет\u00a0описания ситуации', reason: 'Что\u00a0происходит вокруг задачи? Без\u00a0контекста невозможно оценить уместность и\u00a0тон.', forMissing: 'situation' }
+    ],
+    questions: ['Кто\u00a0будет читать эту\u00a0статью? Какой у\u00a0этих людей уровень погружения в\u00a0тему?','Какую задачу бизнеса решает этот текст?'],
+    riskIfMissing: 'Без\u00a0контекста редактор не\u00a0понимает, в\u00a0какой ситуации находится клиент.'
+  },
+  {
+    id: 'problem', title: 'Проблема', subtitle: 'что\u00a0мешает, от\u00a0чего нужно избавиться',
+    markers: [
+      { keywords: ['сейчас','текущ','в данный момент','на данный момент','пока нет','нет контент'], group: 'current' },
+      { keywords: ['проблем','не работает','жалоб','отток','падени','снижени','барьер','сложност','трудност','мешает','стресс','выгоран'], group: 'issue' },
+      { keywords: ['конкурент','рынок сейчас','рыночн','другие компании','другие публику'], group: 'competition' }
+    ],
+    gaps: [
+      { text: 'Нет\u00a0описания текущей ситуации', reason: 'Непонятно, от\u00a0какой точки отталкиваться.', forMissing: 'current' },
+      { text: 'Не\u00a0описана проблема', reason: 'Если нет\u00a0проблемы — нет\u00a0мотивации читать.', forMissing: 'issue' }
+    ],
+    questions: ['Какую проблему аудитории решает ваш\u00a0продукт? Есть\u00a0ли данные или\u00a0кейсы?','Как\u00a0эту\u00a0задачу решали раньше?'],
+    riskIfMissing: 'Без\u00a0описания проблемы невозможно построить аргументацию.'
+  },
+  {
+    id: 'task', title: 'Задача', subtitle: 'желаемый результат, при\u00a0котором проблема исчезает',
+    markers: [
+      { keywords: ['написать','написа','подготовить','сделать','создать','разработать','нужна стать','нужен текст','хотим'], group: 'action' },
+      { keywords: ['статья','текст','пост','кейс','лонгрид','рассылк','лендинг','сценари','обзор','интервью','колонк','гайд','инструкци','материал','экспертн'], group: 'format' }
+    ],
+    gaps: [
+      { text: 'Не\u00a0указан формат материала', reason: 'Кейс, обзор, экспертная колонка — разные структуры.', forMissing: 'format' },
+      { text: 'Не\u00a0сформулировано действие', reason: 'Написать с\u00a0нуля, отредактировать, адаптировать?', forMissing: 'action' }
+    ],
+    questions: ['Какой формат вы\u00a0видите — экспертная колонка, обзор, кейс?','Что\u00a0должно измениться в\u00a0результате?'],
+    riskIfMissing: 'Без\u00a0задачи нет\u00a0критериев приёмки.'
+  },
+  {
+    id: 'solution', title: 'Решение', subtitle: 'конкретные действия для\u00a0решения задачи',
+    markers: [
+      { keywords: ['для этого','можно','план','подход','стратеги','предлага','вариант','способ'], group: 'approach' },
+      { keywords: ['структур','раздел','включить','осветить','затронуть','упомянуть','рассказать о','описать'], group: 'content_plan' },
+      { keywords: ['референс','пример','ориентир','как у','похож на','в стиле','по аналогии'], group: 'reference' }
+    ],
+    gaps: [
+      { text: 'Нет\u00a0описания подхода к\u00a0решению', reason: 'Редактор выберет подход сам — и\u00a0может не\u00a0угадать.', forMissing: 'approach' },
+      { text: 'Нет\u00a0плана по\u00a0содержанию', reason: 'Без\u00a0понимания, что\u00a0должно быть в\u00a0тексте, редактор сам решает темы.', forMissing: 'content_plan' },
+      { text: 'Нет\u00a0референсов', reason: 'Без\u00a0примеров вы\u00a0и\u00a0заказчик можете иметь в\u00a0виду разные вещи.', forMissing: 'reference' }
+    ],
+    questions: ['Есть\u00a0ли видение структуры — какие темы должны быть в\u00a0тексте?','Есть\u00a0ли референсы — примеры статей, которые нравятся?'],
+    riskIfMissing: 'Без\u00a0согласованного решения редактор действует вслепую.'
+  },
+  {
+    id: 'deliverable', title: 'Конечный результат', subtitle: 'артефакт, формат передачи, объём',
+    markers: [
+      { keywords: ['знаков','символов','слов','страниц','объём','объем','000 знак','500 знак'], group: 'volume' },
+      { keywords: ['гуглдок','google doc','файл','ворд','word','документ','формат','pdf'], group: 'artifact' },
+      { keywords: ['блог','соцсет','рассылк','сайт','журнал','телеграм','канал','хабр','vc.ru','для блог'], group: 'channel' },
+      { keywords: ['тон','стиль','голос','серьёзн','серьезн','дружелюбн','формальн','неформальн','брендбук','академич'], group: 'tone' }
+    ],
+    gaps: [
+      { text: 'Не\u00a0указан объём', reason: 'Лонгрид на\u00a010\u202f000 знаков и\u00a0пост на\u00a01\u202f500 — разные тексты.', forMissing: 'volume' },
+      { text: 'Не\u00a0указан формат передачи', reason: 'Гуглдок, ворд, письмо в\u00a0телеграме?', forMissing: 'artifact' },
+      { text: 'Не\u00a0указан канал публикации', reason: 'У\u00a0каждого канала свои правила длины и\u00a0подачи.', forMissing: 'channel' },
+      { text: 'Нет\u00a0требований к\u00a0тону', reason: 'Серьёзный экспертный или\u00a0дружелюбный разговорный?', forMissing: 'tone' }
+    ],
+    questions: ['Какой объём и\u00a0в\u00a0каком формате передать результат?','Где\u00a0будет опубликован материал? Есть\u00a0ли требования к\u00a0тону?'],
+    riskIfMissing: 'Без\u00a0параметров конечного результата невозможно оценить трудозатраты.'
+  },
+  {
+    id: 'deadlines', title: 'Сроки', subtitle: 'дедлайн и\u00a0кто\u00a0согласует',
+    markers: [
+      { keywords: ['дедлайн','к пятниц','к понедельник','к среде','к четвер','срок','дата','пятница','понедельник','следующ','до конца недел','до конца месяц'], group: 'deadline' },
+      { keywords: ['согласу','утвержда','подпис','финальн','одобр','апрув'], group: 'approval' },
+      { keywords: ['итерац','раунд','правк','комментари','обратная связь','фидбек','фидбэк'], group: 'process' },
+      { keywords: ['руководител','маркетолог','директор','заказчик','менеджер проект','марина','иван','алексей'], group: 'person' }
+    ],
+    gaps: [
+      { text: 'Не\u00a0указан дедлайн', reason: 'Без\u00a0срока невозможно планировать работу.', forMissing: 'deadline' },
+      { text: 'Неизвестно, кто\u00a0согласует', reason: 'Финальные правки могут перечеркнуть всё.', forMissing: 'approval' },
+      { text: 'Не\u00a0описан процесс правок', reason: 'Сколько раундов? Кто\u00a0даёт обратную связь?', forMissing: 'process' }
+    ],
+    questions: ['Какой дедлайн? Включает\u00a0ли он\u00a0время на\u00a0согласование?','Кто\u00a0будет согласовывать финальный текст?'],
+    riskIfMissing: 'Без\u00a0дедлайна задача «зависнет» или\u00a0правки придут после публикации.'
+  }
+];
+
+// ====== CONTRADICTION RULES ======
+const CONTRADICTION_RULES = [
+  {
+    id: 'volume_conflict', name: 'Противоречие в\u00a0объёме',
+    detect(text) {
+      const lower = text.toLowerCase();
+      const numbers = [];
+      const rangeRegex = /(\d[\d\s]*)\s*[–—\-]\s*(\d[\d\s]*)\s*(?:знак|символ)/gi;
+      let m;
+      while ((m = rangeRegex.exec(lower)) !== null) {
+        numbers.push(parseInt(m[1].replace(/\s/g,'')));
+        numbers.push(parseInt(m[2].replace(/\s/g,'')));
+      }
+      const volRegex = /(\d[\d\s]*)\s*(?:знак|символ|слов)/gi;
+      while ((m = volRegex.exec(lower)) !== null) {
+        const n = parseInt(m[1].replace(/\s/g,''));
+        if (n > 0) numbers.push(n);
+      }
+      const wantsBrief = /кратко|коротк|сжат/i.test(lower);
+      if (numbers.length >= 2) {
+        const min = Math.min(...numbers), max = Math.max(...numbers);
+        if (max > min * 3) return `В\u00a0запросе указаны объёмы, отличающиеся более чем\u00a0в\u00a03\u00a0раза (${min.toLocaleString('ru')} и\u00a0${max.toLocaleString('ru')} знаков). Уточните точный объём.`;
+      }
+      if (wantsBrief && numbers.some(n => n >= 8000)) return 'Запрос просит написать «кратко», но\u00a0указан объём от\u00a08\u00a0000 знаков. Уточните приоритет.';
+      return null;
+    }
+  },
+  {
+    id: 'tone_conflict', name: 'Противоречие в\u00a0тоне',
+    detect(text) {
+      const serious = /серьёзн|формальн|академич|строг/i.test(text);
+      const casual = /дружелюбн|неформальн|весёл|лёгк|разговорн/i.test(text);
+      if (serious && casual) return 'Запрос одновременно просит серьёзный и\u00a0дружелюбный тон. Уточните, какой стиль в\u00a0приоритете.';
+      return null;
+    }
+  },
+  {
+    id: 'audience_conflict', name: 'Противоречие в\u00a0аудитории',
+    detect(text) {
+      const expert = /эксперт|специалист|профессионал|глубок|техничес/i.test(text);
+      const beginner = /новичк|начинающ|простым язык|доступн|для всех|широк/i.test(text);
+      if (expert && beginner) return 'Запрос ориентирован одновременно на\u00a0экспертов и\u00a0на\u00a0новичков. Уточните приоритетную аудиторию.';
+      return null;
+    }
+  }
+];
+
+// ====== STATE ======
+let currentScreen = 1;
+let analysisResults = [];
+let contradictions = [];
+let originalText = '';
+
+// ====== DOM ======
+const $mainInput = document.getElementById('mainInput');
+const $charCount = document.getElementById('charCount');
+const $btnAnalyze = document.getElementById('btnAnalyze');
+const $screen1 = document.getElementById('screen1');
+const $screen2 = document.getElementById('screen2');
+const $screen3 = document.getElementById('screen3');
+const $originalText = document.getElementById('originalText');
+const $originalTextMobile = document.getElementById('originalTextMobile');
+const $originalTextS3 = document.getElementById('originalTextS3');
+const $summaryBar = document.getElementById('summaryBar');
+const $contradictionsContainer = document.getElementById('contradictionsContainer');
+const $categoriesContainer = document.getElementById('categoriesContainer');
+const $questionsSection = document.getElementById('questionsSection');
+const $understandingContainer = document.getElementById('understandingContainer');
+const $answersInput = document.getElementById('answersInput');
+const $accordionS3 = document.getElementById('accordionS3');
+
+// ====== HELPERS ======
+function pluralize(n, one, few, many) {
+  const a = Math.abs(n) % 100, l = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (l > 1 && l < 5) return few;
+  if (l === 1) return one;
+  return many;
+}
+
+function switchScreen(to) {
+  const screens = [$screen1, $screen2, $screen3];
+  const cur = screens[currentScreen - 1];
+  cur.classList.remove('visible');
+  setTimeout(() => {
+    cur.classList.remove('active');
+    const next = screens[to - 1];
+    next.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
+    currentScreen = to;
+    if (to === 2) renderAnalysis();
+    if (to === 3) renderSupplement();
+  }, 200);
+}
+
+// ====== ANALYSIS ENGINE ======
+function analyzeText(text) {
+  const lower = text.toLowerCase();
+  return CATEGORIES.map(cat => {
+    const foundGroups = new Set();
+    const foundDetails = [];
+    for (const marker of cat.markers) {
+      for (const kw of marker.keywords) {
+        if (lower.includes(kw)) {
+          foundGroups.add(marker.group);
+          const idx = lower.indexOf(kw);
+          const s = Math.max(0, idx - 30), e = Math.min(text.length, idx + kw.length + 50);
+          let snip = text.substring(s, e).replace(/\n/g,' ').trim();
+          if (s > 0) snip = '...' + snip;
+          if (e < text.length) snip += '...';
+          foundDetails.push({ group: marker.group, snippet: snip });
+          break;
+        }
+      }
+    }
+    const count = foundGroups.size;
+    const status = count >= 2 ? 'green' : count === 1 ? 'yellow' : 'red';
+    const allGroups = new Set(cat.markers.map(m => m.group));
+    const missingGroups = [...allGroups].filter(g => !foundGroups.has(g));
+    const activeGaps = cat.gaps.filter(g => missingGroups.includes(g.forMissing));
+    const foundSummary = foundDetails.map(d => `«${d.snippet}»`).join(' ');
+    return { ...cat, status, foundGroups: [...foundGroups], missingGroups, activeGaps, foundSummary, foundDetails };
+  });
+}
+
+function detectContradictions(text) {
+  return CONTRADICTION_RULES.map(r => {
+    const msg = r.detect(text);
+    return msg ? { id: r.id, name: r.name, message: msg } : null;
+  }).filter(Boolean);
+}
+
+// ====== RENDERING ======
+function renderAnalysis() {
+  $originalText.textContent = originalText;
+  $originalTextMobile.textContent = originalText;
+  $understandingContainer.innerHTML = '';
+
+  const counts = { green: 0, yellow: 0, red: 0 };
+  analysisResults.forEach(r => counts[r.status]++);
+
+  $summaryBar.innerHTML = `
+    <span class="s-green">Готово: ${counts.green}</span><span class="sep">·</span>
+    <span class="s-yellow">Частично: ${counts.yellow}</span><span class="sep">·</span>
+    <span class="s-red">Не\u00a0хватает: ${counts.red}</span>
+    ${contradictions.length ? `<span class="sep">·</span><span style="color:var(--orange)">Противоречия: ${contradictions.length}</span>` : ''}
+  `;
+
+  // Contradictions
+  if (contradictions.length) {
+    $contradictionsContainer.innerHTML = '<div class="contradictions-section">' +
+      contradictions.map(c => `
+        <div class="contradiction-card">
+          <div class="contradiction-header">
+            <span style="color:var(--orange);font-size:16px">⚠</span>
+            <span class="contradiction-title">${c.name}</span>
+          </div>
+          <div class="contradiction-body">${c.message}</div>
+        </div>`).join('') + '</div>';
+  } else {
+    $contradictionsContainer.innerHTML = '';
+  }
+
+  // Categories
+  $categoriesContainer.innerHTML = analysisResults.map((r, i) => {
+    const bc = r.status === 'green' ? 'badge-green' : r.status === 'yellow' ? 'badge-yellow' : 'badge-red';
+    const bt = r.status === 'green' ? 'Есть' : r.status === 'yellow' ? 'Частично' : 'Не\u00a0хватает';
+    let body = '';
+    if (r.status === 'green') {
+      body = `<div class="cat-found">${r.foundSummary}</div>`;
+    } else {
+      if (r.foundSummary && r.status === 'yellow') {
+        body += `<div class="cat-found" style="margin-bottom:10px">Найдено: ${r.foundSummary}</div>`;
+      }
+      body += r.activeGaps.map(g => `
+        <div class="gap-item">
+          <span style="color:${r.status==='yellow'?'var(--yellow)':'var(--red)'};font-size:15px;margin-top:1px">●</span>
+          <div><div class="gap-text">${g.text}</div><div class="gap-reason">${g.reason}</div></div>
+        </div>`).join('');
+    }
+    return `<div class="category-card" style="transition-delay:${i*60}ms">
+      <div class="cat-header"><span class="cat-title">${r.title}</span><span class="badge ${bc}">${bt}</span></div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px">${r.subtitle}</div>
+      ${body}
+    </div>`;
+  }).join('');
+
+  setTimeout(() => {
+    document.querySelectorAll('.category-card').forEach((c, i) => setTimeout(() => c.classList.add('show'), i * 60));
+  }, 50);
+
+  // Questions
+  const needQ = analysisResults.filter(r => r.status !== 'green');
+  const allQ = needQ.flatMap(r => r.questions);
+  window._allQuestions = allQ;
+
+  if (allQ.length) {
+    $questionsSection.innerHTML = '<h3>Вопросы, которые стоит задать</h3>' +
+      allQ.map((q, i) => `
+        <div class="question-card">
+          <div class="q-content"><span class="q-num">${i+1}.</span><span class="q-text">${q}</span></div>
+          <button class="btn-copy" onclick="copyQ(this,${JSON.stringify(q).replace(/"/g,'&quot;')})">📋</button>
+        </div>`).join('') +
+      `<div class="copy-all-wrap"><button class="btn-ghost" id="btnCopyAll" onclick="copyAll()">Скопировать все вопросы</button></div>`;
+  } else {
+    $questionsSection.innerHTML = '<p style="color:var(--green);font-size:14px;margin-top:20px">Все категории заполнены. Запрос готов к\u00a0работе ✓</p>';
+  }
+  $questionsSection.style.display = 'block';
+}
+
+function renderSupplement() {
+  $originalTextS3.textContent = originalText;
+  $accordionS3.innerHTML = analysisResults.map(r => {
+    const bc = r.status === 'green' ? 'badge-green' : r.status === 'yellow' ? 'badge-yellow' : 'badge-red';
+    const bt = r.status === 'green' ? 'Есть' : r.status === 'yellow' ? 'Частично' : 'Не\u00a0хватает';
+    return `<div class="accordion-card"><div class="accordion-header"><span class="cat-title">${r.title}</span><span class="badge ${bc}">${bt}</span></div></div>`;
+  }).join('');
+}
+
+// ====== UNDERSTANDING ======
+function generateUnderstanding() {
+  const blocks = analysisResults.map(r => {
+    const value = r.foundDetails.length ? r.foundDetails.map(d => d.snippet).join('. ') : '';
+    let risk = null;
+    if (r.status === 'red') risk = r.riskIfMissing;
+    else if (r.status === 'yellow' && r.activeGaps.length) {
+      risk = 'Не\u00a0хватает: ' + r.activeGaps.map(g => g.text.toLowerCase()).join('; ') + '.';
+    }
+    return { label: r.title, value: r.status === 'red' ? '' : value, risk, status: r.status };
+  });
+
+  window._understandingPlainText = 'ПОНИМАНИЕ ЗАДАЧИ\n\n' +
+    blocks.map(b => `${b.label}\n${b.value || '(нет данных)'}${b.risk ? '\n⚠️ ' + b.risk.replace(/\u00a0/g,' ') : ''}`).join('\n\n') +
+    (contradictions.length ? '\n\nПротиворечия:\n' + contradictions.map(c => '⚠️ ' + c.name.replace(/\u00a0/g,' ') + ': ' + c.message.replace(/\u00a0/g,' ')).join('\n') : '');
+
+  $understandingContainer.innerHTML = '<div class="understanding-section"><h3>Понимание задачи</h3>' +
+    blocks.map(b => `
+      <div class="understanding-block">
+        <div class="understanding-label">${b.label}</div>
+        <div class="understanding-value">${b.value || '<span style="color:var(--text-dim);font-style:italic">Информация отсутствует</span>'}</div>
+        ${b.risk ? `<div class="understanding-risk"><span>⚠</span><span>${b.risk}</span></div>` : ''}
+      </div>`).join('') +
+    (contradictions.length ? `<div class="understanding-block"><div class="understanding-label">Противоречия</div>` +
+      contradictions.map(c => `<div class="understanding-risk" style="margin-bottom:6px"><span>⚠</span><span><strong>${c.name}:</strong> ${c.message}</span></div>`).join('') + '</div>' : '') +
+    `<div class="copy-understanding-wrap"><button class="btn-ghost" id="btnCopyU" onclick="copyU()">Скопировать понимание задачи</button></div></div>`;
+
+  $understandingContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ====== COPY ======
+function copyQ(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = '📋'; }, 1500);
+  });
+}
+function copyAll() {
+  navigator.clipboard.writeText(window._allQuestions.map((q,i) => `${i+1}. ${q}`).join('\n')).then(() => {
+    const b = document.getElementById('btnCopyAll');
+    b.textContent = 'Скопировано ✓';
+    setTimeout(() => { b.textContent = 'Скопировать все вопросы'; }, 2000);
+  });
+}
+function copyU() {
+  navigator.clipboard.writeText(window._understandingPlainText).then(() => {
+    const b = document.getElementById('btnCopyU');
+    b.textContent = 'Скопировано ✓';
+    setTimeout(() => { b.textContent = 'Скопировать понимание задачи'; }, 2000);
+  });
+}
+
+// ====== EVENTS ======
+$mainInput.addEventListener('input', () => {
+  const len = $mainInput.value.length;
+  $charCount.textContent = `${len} ${pluralize(len,'символ','символа','символов')}`;
+  $btnAnalyze.disabled = len < 20;
+});
+
+document.getElementById('btnDemo').addEventListener('click', () => {
+  $mainInput.value = DEMO_TEXT;
+  $mainInput.dispatchEvent(new Event('input'));
+});
+
+$btnAnalyze.addEventListener('click', () => {
+  if ($mainInput.value.length < 20) return;
+  originalText = $mainInput.value;
+  $btnAnalyze.innerHTML = 'Анализирую<span class="pulse-dot"></span>';
+  $btnAnalyze.disabled = true;
+  setTimeout(() => {
+    analysisResults = analyzeText(originalText);
+    contradictions = detectContradictions(originalText);
+    $btnAnalyze.innerHTML = 'Разобрать запрос →';
+    $btnAnalyze.disabled = false;
+    switchScreen(2);
+  }, 1800 + Math.random() * 800);
+});
+
+document.getElementById('btnEditDesktop').addEventListener('click', () => {
+  $mainInput.value = originalText;
+  $mainInput.dispatchEvent(new Event('input'));
+  switchScreen(1);
+});
+document.getElementById('btnEditMobile').addEventListener('click', () => {
+  $mainInput.value = originalText;
+  $mainInput.dispatchEvent(new Event('input'));
+  switchScreen(1);
+});
+
+document.getElementById('mobileAccToggle').addEventListener('click', () => {
+  document.getElementById('mobileAccBody').classList.toggle('open');
+  const ch = document.getElementById('mobileChevron');
+  ch.classList.toggle('rotated');
+});
+
+document.getElementById('btnAddAnswers').addEventListener('click', () => switchScreen(3));
+document.getElementById('btnGenUnderstanding').addEventListener('click', generateUnderstanding);
+
+document.getElementById('btnUpdateAnalysis').addEventListener('click', () => {
+  const answers = $answersInput.value.trim();
+  if (!answers) return;
+  const btn = document.getElementById('btnUpdateAnalysis');
+  btn.innerHTML = 'Анализирую<span class="pulse-dot"></span>';
+  btn.disabled = true;
+  setTimeout(() => {
+    analysisResults = analyzeText(originalText + '\n\n' + answers);
+    contradictions = detectContradictions(originalText + '\n\n' + answers);
+    btn.innerHTML = 'Обновить разбор →';
+    btn.disabled = false;
+    switchScreen(2);
+  }, 1500 + Math.random() * 800);
+});
+
+// ====== INIT ======
+$screen1.classList.add('active');
+requestAnimationFrame(() => requestAnimationFrame(() => $screen1.classList.add('visible')));
+</script>
+</body>
+</html>
