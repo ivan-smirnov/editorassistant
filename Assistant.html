@@ -545,6 +545,70 @@ const $understandingContainer = document.getElementById('understandingContainer'
 const $answersInput = document.getElementById('answersInput');
 const $accordionS3 = document.getElementById('accordionS3');
 
+// ====== PERSISTENCE (localStorage) ======
+const LS_KEY = 'editorassistant.v1';
+
+function debounce(fn, ms) {
+  let t;
+  return function (...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+function persistState() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      v: 1,
+      screen: currentScreen,
+      mainInput: $mainInput.value,
+      originalText,
+      answersInput: $answersInput.value
+    }));
+  } catch (e) { /* quota / private mode */ }
+}
+
+const persistStateDebounced = debounce(persistState, 400);
+
+function restoreState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || typeof s !== 'object') return false;
+
+    if (typeof s.mainInput === 'string') $mainInput.value = s.mainInput;
+    if (typeof s.originalText === 'string') originalText = s.originalText;
+    if (typeof s.answersInput === 'string') $answersInput.value = s.answersInput;
+
+    const screen = Math.min(3, Math.max(1, parseInt(s.screen, 10) || 1));
+    const hasAnalyzed = originalText.length >= 20;
+    const combined = $answersInput.value.trim()
+      ? originalText + '\n\n' + $answersInput.value
+      : originalText;
+
+    if (hasAnalyzed) {
+      analysisResults = analyzeText(combined);
+      contradictions = detectContradictions(combined);
+    }
+
+    currentScreen = screen;
+    [$screen1, $screen2, $screen3].forEach((el, i) => {
+      const on = i === screen - 1;
+      el.classList.toggle('active', on);
+      el.classList.toggle('visible', on);
+    });
+
+    if (screen === 2) renderAnalysis();
+    if (screen === 3) renderSupplement();
+
+    $mainInput.dispatchEvent(new Event('input'));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // ====== HELPERS ======
 function pluralize(n, one, few, many) {
   const a = Math.abs(n) % 100, l = a % 10;
@@ -567,6 +631,7 @@ function switchScreen(to) {
     currentScreen = to;
     if (to === 2) renderAnalysis();
     if (to === 3) renderSupplement();
+    persistState();
   }, 200);
 }
 
@@ -751,7 +816,10 @@ $mainInput.addEventListener('input', () => {
   const len = $mainInput.value.length;
   $charCount.textContent = `${len} ${pluralize(len,'символ','символа','символов')}`;
   $btnAnalyze.disabled = len < 20;
+  persistStateDebounced();
 });
+
+$answersInput.addEventListener('input', persistStateDebounced);
 
 document.getElementById('btnDemo').addEventListener('click', () => {
   $mainInput.value = DEMO_TEXT;
@@ -808,8 +876,11 @@ document.getElementById('btnUpdateAnalysis').addEventListener('click', () => {
 });
 
 // ====== INIT ======
-$screen1.classList.add('active');
-requestAnimationFrame(() => requestAnimationFrame(() => $screen1.classList.add('visible')));
+window.addEventListener('beforeunload', persistState);
+if (!restoreState()) {
+  $screen1.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => $screen1.classList.add('visible')));
+}
 </script>
 </body>
 </html>
