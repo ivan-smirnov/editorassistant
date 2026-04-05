@@ -22,6 +22,34 @@
 | Файл | Назначение |
 |------|------------|
 | `Assistant.html` | Разметка, стили, логика — один файл |
+| `netlify.toml` | Настройки публикации на Netlify (см. ниже) |
+
+## Публикация на Netlify (автообновление после мёржа в `main`)
+
+Сайт можно привязать к этому репозиторию: после каждого **push в ветку production** (ниже — `main`) Netlify заново выкладывает файлы. Обычный сценарий: **merge pull request в `main`** → на GitHub попадает новый коммит → Netlify сам подхватывает изменения.
+
+### Один раз: подключить репозиторий
+
+1. Зайди на [Netlify](https://www.netlify.com/) и войди в аккаунт (или зарегистрируйся).
+2. **Add new site** → **Import an existing project**.
+3. **Deploy with GitHub** → разреши Netlify доступ к GitHub (если спросит — выбери репозиторий **`ivan-smirnov/editorassistant`** или «All repositories»).
+4. В настройках деплоя:
+   - **Branch to deploy:** `main`
+   - **Build command:** оставь **пустым** (в репозитории есть `netlify.toml`, команда сборки не нужна).
+   - **Publish directory:** `.` или оставь как подставит Netlify из `netlify.toml` — корень репозитория.
+5. Нажми **Deploy**. Через минуту появится ссылка вида `https://что-то.netlify.app`.
+
+Файл **`netlify.toml`** уже задаёт папку публикации и перенаправление с `/` на `Assistant.html`, чтобы главная страница сайта открывала приложение.
+
+### Автодеплой при мёрже
+
+- В **Site configuration → Build & deploy → Continuous deployment** проверь, что включён деплой из **GitHub** и production-ветка — **`main`**.
+- Любой **merge в `main`** (или прямой push в `main`) запускает новый деплой; менять что-то в Netlify для каждого мёржа не нужно.
+
+### Полезно
+
+- **Deploy previews:** для pull request’ов Netlify по желанию собирает превью-ссылки (в настройках сайта / на GitHub можно включить проверки).
+- Кастомный домен: **Domain management** в панели сайта.
 
 ## Ограничения MVP
 

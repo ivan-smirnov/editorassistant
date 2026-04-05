@@ -1,0 +1,12 @@
+# Статический сайт: один HTML-файл, сборка не нужна.
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  publish = "."
+
+# Главная страница Netlify ищет index.html; у проекта файл Assistant.html —
+# отдаём его по корню URL (адрес остаётся /).
+[[redirects]]
+  from = "/"
+  to = "/Assistant.html"
+  status = 200
