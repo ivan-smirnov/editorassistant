@@ -77,6 +77,57 @@ body {
 .input-wrapper h1 { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 12px; }
 .input-wrapper .subtitle { font-size: 15px; color: var(--text-muted); margin-bottom: 28px; }
 
+.ai-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.ai-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.ai-panel-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.ai-panel-note { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+.ai-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.ai-input {
+  width: 100%;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  padding: 9px 12px;
+  outline: none;
+}
+.ai-input:focus { border-color: var(--border-hover); }
+.ai-status { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+.ai-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+.ai-toggle input { accent-color: var(--accent); }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.pill-ai { background: rgba(59,130,246,0.16); color: #8ebcff; }
+.pill-warning { background: rgba(249,115,22,0.14); color: var(--orange); }
+.pill-danger { background: rgba(239,68,68,0.14); color: var(--red); }
+
 .textarea-main {
   width: 100%;
   min-height: 200px;
@@ -225,6 +276,8 @@ body {
 .q-content { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; }
 .q-num { font-size: 13px; font-weight: 600; color: var(--text-dim); flex-shrink: 0; min-width: 20px; }
 .q-text { font-size: 14px; line-height: 1.6; color: var(--text-muted); }
+.q-meta { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+.q-rationale { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
 
 .btn-copy {
   background: transparent; border: none; cursor: pointer; color: var(--text-dim);
@@ -305,6 +358,23 @@ body {
     <div class="input-wrapper">
       <h1>Проверьте запрос на&nbsp;готовность к&nbsp;работе</h1>
       <p class="subtitle">Вставьте всё, что&nbsp;получили от&nbsp;клиента: письмо, расшифровку звонка, сообщение из&nbsp;мессенджера. Ассистент покажет, чего не&nbsp;хватает, и&nbsp;соберёт понимание задачи.</p>
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <span class="ai-panel-title">AI-анализ (cloud API)</span>
+          <span class="pill pill-danger">Внешняя отправка текста</span>
+        </div>
+        <p class="ai-panel-note">Ключ хранится только в вашем браузере (localStorage) и не попадает в репозиторий. Не используйте режим, если в тексте есть чувствительные данные.</p>
+        <div class="ai-row">
+          <input id="aiApiKeyInput" class="ai-input" type="password" placeholder="Вставьте API ключ">
+          <button class="btn-ghost" id="btnSaveAiKey">Сохранить ключ</button>
+          <button class="btn-ghost" id="btnClearAiKey">Очистить</button>
+        </div>
+        <label class="ai-toggle">
+          <input id="aiEnabledToggle" type="checkbox">
+          <span>Использовать AI-анализ (если есть ключ)</span>
+        </label>
+        <div id="aiStatus" class="ai-status">AI-режим выключен: ключ не задан.</div>
+      </div>
       <textarea id="mainInput" class="textarea-main" placeholder="Напишите статью про наш продукт для HR-директоров. Нам важно показать, что мы лидеры рынка. Дедлайн — пятница."></textarea>
       <div class="input-footer">
         <div class="input-footer-left">
@@ -526,6 +596,26 @@ let currentScreen = 1;
 let analysisResults = [];
 let contradictions = [];
 let originalText = '';
+let aiQuestions = [];
+let aiUnderstanding = [];
+let analysisSource = 'heuristic';
+let analysisNotice = '';
+
+const AI_STORAGE_KEY = 'editorassistant.v1.aiApiKey';
+const AI_ENABLED_KEY = 'editorassistant.v1.aiEnabled';
+const AI_CONFIG = {
+  endpoint: 'https://api.openai.com/v1/responses',
+  model: 'gpt-4.1-mini',
+  temperature: 0.2,
+  timeoutMs: 25000
+};
+
+const AI_OUTPUT_SCHEMA = {
+  contradictions: [{ type: 'string', evidence: 'string', explanation: 'string', confidence: '0-1' }],
+  questions: [{ priority: 'must|should', text: 'string', rationale: 'string', relatedContradictionType: 'string' }],
+  categorySignals: [{ id: 'context|problem|task|solution|deliverable|deadlines', status: 'green|yellow|red', note: 'string' }],
+  shortTaskUnderstanding: ['string']
+};
 
 // ====== DOM ======
 const $mainInput = document.getElementById('mainInput');
@@ -544,6 +634,11 @@ const $questionsSection = document.getElementById('questionsSection');
 const $understandingContainer = document.getElementById('understandingContainer');
 const $answersInput = document.getElementById('answersInput');
 const $accordionS3 = document.getElementById('accordionS3');
+const $aiApiKeyInput = document.getElementById('aiApiKeyInput');
+const $btnSaveAiKey = document.getElementById('btnSaveAiKey');
+const $btnClearAiKey = document.getElementById('btnClearAiKey');
+const $aiStatus = document.getElementById('aiStatus');
+const $aiEnabledToggle = document.getElementById('aiEnabledToggle');
 
 // ====== HELPERS ======
 function pluralize(n, one, few, many) {
@@ -568,6 +663,225 @@ function switchScreen(to) {
     if (to === 2) renderAnalysis();
     if (to === 3) renderSupplement();
   }, 200);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function readAiKey() {
+  return localStorage.getItem(AI_STORAGE_KEY) || '';
+}
+
+function hasAiKey() {
+  return Boolean(readAiKey().trim());
+}
+
+function isAiEnabled() {
+  return localStorage.getItem(AI_ENABLED_KEY) !== 'false';
+}
+
+function updateAiStatus(note) {
+  if (!isAiEnabled()) {
+    $aiStatus.textContent = 'AI-режим выключен вручную. Используется только локальный анализ.';
+    return;
+  }
+  if (!hasAiKey()) {
+    $aiStatus.textContent = 'AI-режим выключен: ключ не задан.';
+    return;
+  }
+  $aiStatus.textContent = note || `AI-режим включен. Модель: ${AI_CONFIG.model}.`;
+}
+
+function setButtonLoading(button, loadingText, isLoading) {
+  if (isLoading) {
+    button.innerHTML = `${loadingText}<span class="pulse-dot"></span>`;
+    button.disabled = true;
+    return;
+  }
+  button.disabled = false;
+}
+
+function runHeuristicPipeline(text) {
+  return {
+    analysisResults: analyzeText(text),
+    contradictions: detectContradictions(text),
+    aiQuestions: [],
+    aiUnderstanding: [],
+    source: 'heuristic',
+    notice: 'Использован эвристический анализ.'
+  };
+}
+
+function applyCategorySignals(baseResults, categorySignals) {
+  if (!Array.isArray(categorySignals) || !categorySignals.length) return baseResults;
+  const byId = new Map(categorySignals.map(s => [s.id, s]));
+  return baseResults.map(item => {
+    const signal = byId.get(item.id);
+    if (!signal) return item;
+    return { ...item, status: signal.status };
+  });
+}
+
+function extractJsonStringFromText(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  const direct = raw.trim();
+  if (direct.startsWith('{') && direct.endsWith('}')) return direct;
+  const match = direct.match(/\{[\s\S]*\}/);
+  return match ? match[0] : '';
+}
+
+function normalizeAiResponse(rawResponseText) {
+  const jsonString = extractJsonStringFromText(rawResponseText);
+  if (!jsonString) throw new Error('AI не вернул JSON.');
+  const parsed = JSON.parse(jsonString);
+  if (!Array.isArray(parsed.contradictions) || !Array.isArray(parsed.questions) || !Array.isArray(parsed.categorySignals)) {
+    throw new Error('AI JSON не соответствует контракту.');
+  }
+
+  const contradictionItems = parsed.contradictions
+    .filter(item => item && typeof item.explanation === 'string' && typeof item.type === 'string')
+    .map(item => ({
+      id: item.type,
+      name: item.type,
+      message: item.explanation,
+      evidence: typeof item.evidence === 'string' ? item.evidence : ''
+    }));
+
+  const questionItems = parsed.questions
+    .filter(item => item && typeof item.text === 'string')
+    .map(item => ({
+      priority: item.priority === 'must' ? 'must' : 'should',
+      text: item.text.trim(),
+      rationale: typeof item.rationale === 'string' ? item.rationale.trim() : '',
+      relatedContradictionType: typeof item.relatedContradictionType === 'string' ? item.relatedContradictionType : ''
+    }))
+    .filter(item => item.text.length > 0)
+    .sort((a, b) => (a.priority === b.priority ? 0 : a.priority === 'must' ? -1 : 1));
+
+  const validStatuses = new Set(['green', 'yellow', 'red']);
+  const validCategoryIds = new Set(CATEGORIES.map(c => c.id));
+  const categorySignals = parsed.categorySignals
+    .filter(item => item && validCategoryIds.has(item.id) && validStatuses.has(item.status))
+    .map(item => ({ id: item.id, status: item.status, note: typeof item.note === 'string' ? item.note : '' }));
+
+  const understanding = Array.isArray(parsed.shortTaskUnderstanding)
+    ? parsed.shortTaskUnderstanding.filter(v => typeof v === 'string').map(v => v.trim()).filter(Boolean)
+    : [];
+
+  return { contradictionItems, questionItems, categorySignals, understanding };
+}
+
+function buildAiPrompt(rawText) {
+  return [
+    'Ты аналитик брифов для редактора. Верни ТОЛЬКО валидный JSON без markdown и пояснений.',
+    'Контракт JSON:',
+    JSON.stringify(AI_OUTPUT_SCHEMA, null, 2),
+    'Правила:',
+    '1) contradictions: фиксируй только реальные нестыковки/противоречия по тексту.',
+    '2) questions: каждый вопрос должен быть конкретным и выводиться из contradictions.',
+    '3) приоритет must только для блокеров старта работы, остальное should.',
+    '4) categorySignals: оцени 6 категорий по статусам green/yellow/red.',
+    '5) shortTaskUnderstanding: 4-6 коротких пунктов для редактора.',
+    '',
+    'Текст клиента:',
+    rawText
+  ].join('\n');
+}
+
+function readResponseText(payload) {
+  if (typeof payload.output_text === 'string' && payload.output_text.trim()) return payload.output_text.trim();
+  if (Array.isArray(payload.output)) {
+    const chunks = [];
+    payload.output.forEach(item => {
+      if (!Array.isArray(item.content)) return;
+      item.content.forEach(part => {
+        if (part.type === 'output_text' && typeof part.text === 'string') chunks.push(part.text);
+      });
+    });
+    if (chunks.length) return chunks.join('\n').trim();
+  }
+  return '';
+}
+
+async function requestAiAnalysis(rawText) {
+  const apiKey = readAiKey().trim();
+  if (!apiKey) throw new Error('API ключ отсутствует.');
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_CONFIG.timeoutMs);
+
+  try {
+    const res = await fetch(AI_CONFIG.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: AI_CONFIG.model,
+        temperature: AI_CONFIG.temperature,
+        input: [
+          { role: 'system', content: 'Ты помощник редактора по анализу брифа.' },
+          { role: 'user', content: buildAiPrompt(rawText) }
+        ]
+      }),
+      signal: controller.signal
+    });
+
+    if (!res.ok) throw new Error(`API ошибка ${res.status}`);
+    const payload = await res.json();
+    const rawTextResponse = readResponseText(payload);
+    if (!rawTextResponse) throw new Error('Пустой ответ модели.');
+    return normalizeAiResponse(rawTextResponse);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function analyzeWithAiOrFallback(text) {
+  const heuristic = runHeuristicPipeline(text);
+  if (!isAiEnabled()) {
+    return {
+      ...heuristic,
+      source: 'heuristic',
+      notice: 'Выбран только локальный режим анализа.'
+    };
+  }
+  if (!hasAiKey()) return heuristic;
+
+  try {
+    const aiData = await requestAiAnalysis(text);
+    return {
+      analysisResults: applyCategorySignals(heuristic.analysisResults, aiData.categorySignals),
+      contradictions: aiData.contradictionItems.length ? aiData.contradictionItems : heuristic.contradictions,
+      aiQuestions: aiData.questionItems,
+      aiUnderstanding: aiData.understanding,
+      source: 'ai',
+      notice: 'AI-анализ выполнен. Вопросы сформированы из найденных нестыковок.'
+    };
+  } catch (error) {
+    return {
+      ...heuristic,
+      source: 'fallback',
+      notice: `AI недоступен (${error.message}). Использован эвристический fallback.`
+    };
+  }
+}
+
+async function executeAnalysisPipeline(text) {
+  const result = await analyzeWithAiOrFallback(text);
+  analysisResults = result.analysisResults;
+  contradictions = result.contradictions;
+  aiQuestions = result.aiQuestions || [];
+  aiUnderstanding = result.aiUnderstanding || [];
+  analysisSource = result.source;
+  analysisNotice = result.notice;
 }
 
 // ====== ANALYSIS ENGINE ======
@@ -621,7 +935,12 @@ function renderAnalysis() {
     <span class="s-yellow">Частично: ${counts.yellow}</span><span class="sep">·</span>
     <span class="s-red">Не\u00a0хватает: ${counts.red}</span>
     ${contradictions.length ? `<span class="sep">·</span><span style="color:var(--orange)">Противоречия: ${contradictions.length}</span>` : ''}
+    ${analysisSource === 'ai' ? '<span class="sep">·</span><span class="pill pill-ai">AI</span>' : ''}
+    ${analysisSource === 'fallback' ? '<span class="sep">·</span><span class="pill pill-warning">fallback</span>' : ''}
   `;
+  if (analysisNotice) {
+    $summaryBar.innerHTML += `<span class="sep">·</span><span style="font-size:12px;color:var(--text-dim)">${escapeHtml(analysisNotice)}</span>`;
+  }
 
   // Contradictions
   if (contradictions.length) {
@@ -630,9 +949,9 @@ function renderAnalysis() {
         <div class="contradiction-card">
           <div class="contradiction-header">
             <span style="color:var(--orange);font-size:16px">⚠</span>
-            <span class="contradiction-title">${c.name}</span>
+            <span class="contradiction-title">${escapeHtml(c.name)}</span>
           </div>
-          <div class="contradiction-body">${c.message}</div>
+          <div class="contradiction-body">${escapeHtml(c.message)}${c.evidence ? `<br><span style="color:var(--text-dim)">Фрагмент: ${escapeHtml(c.evidence)}</span>` : ''}</div>
         </div>`).join('') + '</div>';
   } else {
     $contradictionsContainer.innerHTML = '';
@@ -667,16 +986,25 @@ function renderAnalysis() {
   }, 50);
 
   // Questions
-  const needQ = analysisResults.filter(r => r.status !== 'green');
-  const allQ = needQ.flatMap(r => r.questions);
+  const heuristicQuestions = analysisResults.filter(r => r.status !== 'green').flatMap(r => r.questions.map(q => ({ priority: 'should', text: q, rationale: '' })));
+  const allQ = aiQuestions.length ? aiQuestions : heuristicQuestions;
   window._allQuestions = allQ;
 
   if (allQ.length) {
     $questionsSection.innerHTML = '<h3>Вопросы, которые стоит задать</h3>' +
       allQ.map((q, i) => `
         <div class="question-card">
-          <div class="q-content"><span class="q-num">${i+1}.</span><span class="q-text">${q}</span></div>
-          <button class="btn-copy" onclick="copyQ(this,${JSON.stringify(q).replace(/"/g,'&quot;')})">📋</button>
+          <div class="q-content">
+            <span class="q-num">${i+1}.</span>
+            <div>
+              <span class="q-text">${escapeHtml(q.text)}</span>
+              <div class="q-meta">
+                <span class="pill ${q.priority === 'must' ? 'pill-danger' : 'pill-warning'}">${q.priority === 'must' ? 'Must' : 'Should'}</span>
+              </div>
+              ${q.rationale ? `<div class="q-rationale">${escapeHtml(q.rationale)}</div>` : ''}
+            </div>
+          </div>
+          <button class="btn-copy" onclick="copyQ(this,${JSON.stringify(q.text).replace(/"/g,'&quot;')})">📋</button>
         </div>`).join('') +
       `<div class="copy-all-wrap"><button class="btn-ghost" id="btnCopyAll" onclick="copyAll()">Скопировать все вопросы</button></div>`;
   } else {
@@ -696,6 +1024,23 @@ function renderSupplement() {
 
 // ====== UNDERSTANDING ======
 function generateUnderstanding() {
+  if (analysisSource === 'ai' && aiUnderstanding.length) {
+    const rows = aiUnderstanding.map(point => `• ${point}`).join('\n');
+    window._understandingPlainText = `ПОНИМАНИЕ ЗАДАЧИ\n\n${rows}\n\n` +
+      (contradictions.length ? 'Противоречия:\n' + contradictions.map(c => `⚠️ ${c.name}: ${c.message}`).join('\n') : '');
+
+    $understandingContainer.innerHTML = '<div class="understanding-section"><h3>Понимание задачи</h3>' +
+      aiUnderstanding.map(point => `
+        <div class="understanding-block">
+          <div class="understanding-value">${escapeHtml(point)}</div>
+        </div>`).join('') +
+      (contradictions.length ? `<div class="understanding-block"><div class="understanding-label">Противоречия</div>` +
+        contradictions.map(c => `<div class="understanding-risk" style="margin-bottom:6px"><span>⚠</span><span><strong>${escapeHtml(c.name)}:</strong> ${escapeHtml(c.message)}</span></div>`).join('') + '</div>' : '') +
+      `<div class="copy-understanding-wrap"><button class="btn-ghost" id="btnCopyU" onclick="copyU()">Скопировать понимание задачи</button></div></div>`;
+    $understandingContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
   const blocks = analysisResults.map(r => {
     const value = r.foundDetails.length ? r.foundDetails.map(d => d.snippet).join('. ') : '';
     let risk = null;
@@ -732,7 +1077,7 @@ function copyQ(btn, text) {
   });
 }
 function copyAll() {
-  navigator.clipboard.writeText(window._allQuestions.map((q,i) => `${i+1}. ${q}`).join('\n')).then(() => {
+  navigator.clipboard.writeText(window._allQuestions.map((q,i) => `${i+1}. ${q.text}`).join('\n')).then(() => {
     const b = document.getElementById('btnCopyAll');
     b.textContent = 'Скопировано ✓';
     setTimeout(() => { b.textContent = 'Скопировать все вопросы'; }, 2000);
@@ -758,18 +1103,17 @@ document.getElementById('btnDemo').addEventListener('click', () => {
   $mainInput.dispatchEvent(new Event('input'));
 });
 
-$btnAnalyze.addEventListener('click', () => {
+$btnAnalyze.addEventListener('click', async () => {
   if ($mainInput.value.length < 20) return;
   originalText = $mainInput.value;
-  $btnAnalyze.innerHTML = 'Анализирую<span class="pulse-dot"></span>';
-  $btnAnalyze.disabled = true;
-  setTimeout(() => {
-    analysisResults = analyzeText(originalText);
-    contradictions = detectContradictions(originalText);
+  setButtonLoading($btnAnalyze, 'Анализирую', true);
+  try {
+    await executeAnalysisPipeline(originalText);
+  } finally {
     $btnAnalyze.innerHTML = 'Разобрать запрос →';
-    $btnAnalyze.disabled = false;
+    setButtonLoading($btnAnalyze, '', false);
     switchScreen(2);
-  }, 1800 + Math.random() * 800);
+  }
 });
 
 document.getElementById('btnEditDesktop').addEventListener('click', () => {
@@ -792,24 +1136,47 @@ document.getElementById('mobileAccToggle').addEventListener('click', () => {
 document.getElementById('btnAddAnswers').addEventListener('click', () => switchScreen(3));
 document.getElementById('btnGenUnderstanding').addEventListener('click', generateUnderstanding);
 
-document.getElementById('btnUpdateAnalysis').addEventListener('click', () => {
+document.getElementById('btnUpdateAnalysis').addEventListener('click', async () => {
   const answers = $answersInput.value.trim();
   if (!answers) return;
   const btn = document.getElementById('btnUpdateAnalysis');
-  btn.innerHTML = 'Анализирую<span class="pulse-dot"></span>';
-  btn.disabled = true;
-  setTimeout(() => {
-    analysisResults = analyzeText(originalText + '\n\n' + answers);
-    contradictions = detectContradictions(originalText + '\n\n' + answers);
+  setButtonLoading(btn, 'Анализирую', true);
+  try {
+    await executeAnalysisPipeline(originalText + '\n\n' + answers);
+  } finally {
     btn.innerHTML = 'Обновить разбор →';
-    btn.disabled = false;
+    setButtonLoading(btn, '', false);
     switchScreen(2);
-  }, 1500 + Math.random() * 800);
+  }
+});
+
+$btnSaveAiKey.addEventListener('click', () => {
+  const key = $aiApiKeyInput.value.trim();
+  if (!key) {
+    updateAiStatus('Введите ключ перед сохранением.');
+    return;
+  }
+  localStorage.setItem(AI_STORAGE_KEY, key);
+  $aiApiKeyInput.value = '';
+  updateAiStatus('Ключ сохранен. AI-режим активен.');
+});
+
+$btnClearAiKey.addEventListener('click', () => {
+  localStorage.removeItem(AI_STORAGE_KEY);
+  $aiApiKeyInput.value = '';
+  updateAiStatus('AI-режим выключен: ключ удален.');
+});
+
+$aiEnabledToggle.addEventListener('change', () => {
+  localStorage.setItem(AI_ENABLED_KEY, $aiEnabledToggle.checked ? 'true' : 'false');
+  updateAiStatus();
 });
 
 // ====== INIT ======
 $screen1.classList.add('active');
 requestAnimationFrame(() => requestAnimationFrame(() => $screen1.classList.add('visible')));
+$aiEnabledToggle.checked = isAiEnabled();
+updateAiStatus();
 </script>
 </body>
 </html>
