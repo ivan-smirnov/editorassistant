@@ -77,45 +77,6 @@ body {
 .input-wrapper h1 { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 12px; }
 .input-wrapper .subtitle { font-size: 15px; color: var(--text-muted); margin-bottom: 28px; }
 
-.ai-panel {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-}
-.ai-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.ai-panel-title { font-size: 14px; font-weight: 600; color: var(--text); }
-.ai-panel-note { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
-.ai-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
-.ai-input {
-  width: 100%;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  padding: 9px 12px;
-  outline: none;
-}
-.ai-input:focus { border-color: var(--border-hover); }
-.ai-status { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
-.ai-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 10px;
-}
-.ai-toggle input { accent-color: var(--accent); }
 .pill {
   display: inline-flex;
   align-items: center;
@@ -358,23 +319,6 @@ body {
     <div class="input-wrapper">
       <h1>Проверьте запрос на&nbsp;готовность к&nbsp;работе</h1>
       <p class="subtitle">Вставьте всё, что&nbsp;получили от&nbsp;клиента: письмо, расшифровку звонка, сообщение из&nbsp;мессенджера. Ассистент покажет, чего не&nbsp;хватает, и&nbsp;соберёт понимание задачи.</p>
-      <div class="ai-panel">
-        <div class="ai-panel-header">
-          <span class="ai-panel-title">AI-анализ (cloud API)</span>
-          <span class="pill pill-danger">Внешняя отправка текста</span>
-        </div>
-        <p class="ai-panel-note">Ключ хранится только в вашем браузере (localStorage) и не попадает в репозиторий. Не используйте режим, если в тексте есть чувствительные данные.</p>
-        <div class="ai-row">
-          <input id="aiApiKeyInput" class="ai-input" type="password" placeholder="Вставьте API ключ">
-          <button class="btn-ghost" id="btnSaveAiKey">Сохранить ключ</button>
-          <button class="btn-ghost" id="btnClearAiKey">Очистить</button>
-        </div>
-        <label class="ai-toggle">
-          <input id="aiEnabledToggle" type="checkbox">
-          <span>Использовать AI-анализ (если есть ключ)</span>
-        </label>
-        <div id="aiStatus" class="ai-status">AI-режим выключен: ключ не задан.</div>
-      </div>
       <textarea id="mainInput" class="textarea-main" placeholder="Напишите статью про наш продукт для HR-директоров. Нам важно показать, что мы лидеры рынка. Дедлайн — пятница."></textarea>
       <div class="input-footer">
         <div class="input-footer-left">
@@ -601,20 +545,9 @@ let aiUnderstanding = [];
 let analysisSource = 'heuristic';
 let analysisNotice = '';
 
-const AI_STORAGE_KEY = 'editorassistant.v1.aiApiKey';
-const AI_ENABLED_KEY = 'editorassistant.v1.aiEnabled';
 const AI_CONFIG = {
-  endpoint: 'https://api.openai.com/v1/responses',
-  model: 'gpt-4.1-mini',
-  temperature: 0.2,
+  endpoint: '/.netlify/functions/analyze-brief',
   timeoutMs: 25000
-};
-
-const AI_OUTPUT_SCHEMA = {
-  contradictions: [{ type: 'string', evidence: 'string', explanation: 'string', confidence: '0-1' }],
-  questions: [{ priority: 'must|should', text: 'string', rationale: 'string', relatedContradictionType: 'string' }],
-  categorySignals: [{ id: 'context|problem|task|solution|deliverable|deadlines', status: 'green|yellow|red', note: 'string' }],
-  shortTaskUnderstanding: ['string']
 };
 
 // ====== DOM ======
@@ -634,11 +567,6 @@ const $questionsSection = document.getElementById('questionsSection');
 const $understandingContainer = document.getElementById('understandingContainer');
 const $answersInput = document.getElementById('answersInput');
 const $accordionS3 = document.getElementById('accordionS3');
-const $aiApiKeyInput = document.getElementById('aiApiKeyInput');
-const $btnSaveAiKey = document.getElementById('btnSaveAiKey');
-const $btnClearAiKey = document.getElementById('btnClearAiKey');
-const $aiStatus = document.getElementById('aiStatus');
-const $aiEnabledToggle = document.getElementById('aiEnabledToggle');
 
 // ====== PERSISTENCE (localStorage) ======
 const LS_KEY = 'editorassistant.v1';
@@ -739,30 +667,6 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function readAiKey() {
-  return localStorage.getItem(AI_STORAGE_KEY) || '';
-}
-
-function hasAiKey() {
-  return Boolean(readAiKey().trim());
-}
-
-function isAiEnabled() {
-  return localStorage.getItem(AI_ENABLED_KEY) !== 'false';
-}
-
-function updateAiStatus(note) {
-  if (!isAiEnabled()) {
-    $aiStatus.textContent = 'AI-режим выключен вручную. Используется только локальный анализ.';
-    return;
-  }
-  if (!hasAiKey()) {
-    $aiStatus.textContent = 'AI-режим выключен: ключ не задан.';
-    return;
-  }
-  $aiStatus.textContent = note || `AI-режим включен. Модель: ${AI_CONFIG.model}.`;
-}
-
 function setButtonLoading(button, loadingText, isLoading) {
   if (isLoading) {
     button.innerHTML = `${loadingText}<span class="pulse-dot"></span>`;
@@ -793,18 +697,7 @@ function applyCategorySignals(baseResults, categorySignals) {
   });
 }
 
-function extractJsonStringFromText(raw) {
-  if (!raw || typeof raw !== 'string') return '';
-  const direct = raw.trim();
-  if (direct.startsWith('{') && direct.endsWith('}')) return direct;
-  const match = direct.match(/\{[\s\S]*\}/);
-  return match ? match[0] : '';
-}
-
-function normalizeAiResponse(rawResponseText) {
-  const jsonString = extractJsonStringFromText(rawResponseText);
-  if (!jsonString) throw new Error('AI не вернул JSON.');
-  const parsed = JSON.parse(jsonString);
+function normalizeAiPayload(parsed) {
   if (!Array.isArray(parsed.contradictions) || !Array.isArray(parsed.questions) || !Array.isArray(parsed.categorySignals)) {
     throw new Error('AI JSON не соответствует контракту.');
   }
@@ -842,42 +735,7 @@ function normalizeAiResponse(rawResponseText) {
   return { contradictionItems, questionItems, categorySignals, understanding };
 }
 
-function buildAiPrompt(rawText) {
-  return [
-    'Ты аналитик брифов для редактора. Верни ТОЛЬКО валидный JSON без markdown и пояснений.',
-    'Контракт JSON:',
-    JSON.stringify(AI_OUTPUT_SCHEMA, null, 2),
-    'Правила:',
-    '1) contradictions: фиксируй только реальные нестыковки/противоречия по тексту.',
-    '2) questions: каждый вопрос должен быть конкретным и выводиться из contradictions.',
-    '3) приоритет must только для блокеров старта работы, остальное should.',
-    '4) categorySignals: оцени 6 категорий по статусам green/yellow/red.',
-    '5) shortTaskUnderstanding: 4-6 коротких пунктов для редактора.',
-    '',
-    'Текст клиента:',
-    rawText
-  ].join('\n');
-}
-
-function readResponseText(payload) {
-  if (typeof payload.output_text === 'string' && payload.output_text.trim()) return payload.output_text.trim();
-  if (Array.isArray(payload.output)) {
-    const chunks = [];
-    payload.output.forEach(item => {
-      if (!Array.isArray(item.content)) return;
-      item.content.forEach(part => {
-        if (part.type === 'output_text' && typeof part.text === 'string') chunks.push(part.text);
-      });
-    });
-    if (chunks.length) return chunks.join('\n').trim();
-  }
-  return '';
-}
-
 async function requestAiAnalysis(rawText) {
-  const apiKey = readAiKey().trim();
-  if (!apiKey) throw new Error('API ключ отсутствует.');
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_CONFIG.timeoutMs);
 
@@ -885,25 +743,24 @@ async function requestAiAnalysis(rawText) {
     const res = await fetch(AI_CONFIG.endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: AI_CONFIG.model,
-        temperature: AI_CONFIG.temperature,
-        input: [
-          { role: 'system', content: 'Ты помощник редактора по анализу брифа.' },
-          { role: 'user', content: buildAiPrompt(rawText) }
-        ]
+        rawText
       }),
       signal: controller.signal
     });
 
-    if (!res.ok) throw new Error(`API ошибка ${res.status}`);
+    if (!res.ok) {
+      let details = '';
+      try {
+        const errorPayload = await res.json();
+        if (errorPayload && typeof errorPayload.error === 'string') details = errorPayload.error;
+      } catch (e) { /* no-op */ }
+      throw new Error(details ? `API ошибка ${res.status}: ${details}` : `API ошибка ${res.status}`);
+    }
     const payload = await res.json();
-    const rawTextResponse = readResponseText(payload);
-    if (!rawTextResponse) throw new Error('Пустой ответ модели.');
-    return normalizeAiResponse(rawTextResponse);
+    return normalizeAiPayload(payload);
   } finally {
     clearTimeout(timer);
   }
@@ -911,15 +768,6 @@ async function requestAiAnalysis(rawText) {
 
 async function analyzeWithAiOrFallback(text) {
   const heuristic = runHeuristicPipeline(text);
-  if (!isAiEnabled()) {
-    return {
-      ...heuristic,
-      source: 'heuristic',
-      notice: 'Выбран только локальный режим анализа.'
-    };
-  }
-  if (!hasAiKey()) return heuristic;
-
   try {
     const aiData = await requestAiAnalysis(text);
     return {
@@ -928,7 +776,7 @@ async function analyzeWithAiOrFallback(text) {
       aiQuestions: aiData.questionItems,
       aiUnderstanding: aiData.understanding,
       source: 'ai',
-      notice: 'AI-анализ выполнен. Вопросы сформированы из найденных нестыковок.'
+      notice: 'AI-анализ выполнен через защищенный серверный запрос.'
     };
   } catch (error) {
     return {
@@ -1218,31 +1066,7 @@ document.getElementById('btnUpdateAnalysis').addEventListener('click', async () 
   }
 });
 
-$btnSaveAiKey.addEventListener('click', () => {
-  const key = $aiApiKeyInput.value.trim();
-  if (!key) {
-    updateAiStatus('Введите ключ перед сохранением.');
-    return;
-  }
-  localStorage.setItem(AI_STORAGE_KEY, key);
-  $aiApiKeyInput.value = '';
-  updateAiStatus('Ключ сохранен. AI-режим активен.');
-});
-
-$btnClearAiKey.addEventListener('click', () => {
-  localStorage.removeItem(AI_STORAGE_KEY);
-  $aiApiKeyInput.value = '';
-  updateAiStatus('AI-режим выключен: ключ удален.');
-});
-
-$aiEnabledToggle.addEventListener('change', () => {
-  localStorage.setItem(AI_ENABLED_KEY, $aiEnabledToggle.checked ? 'true' : 'false');
-  updateAiStatus();
-});
-
 // ====== INIT ======
-$aiEnabledToggle.checked = isAiEnabled();
-updateAiStatus();
 window.addEventListener('beforeunload', persistState);
 if (!restoreState()) {
   $screen1.classList.add('active');
