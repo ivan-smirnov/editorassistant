@@ -82,8 +82,31 @@
 
 | Компонент | Технология | Почему для моего проекта | Бесплатно? | ИИ пишет на этом хорошо? |
 |---|---|---|---|---|
-| Фронтенд + серверные роуты | **Next.js + TypeScript** | Тебе нужен один веб-продукт с формой ввода, экраном разбора, повторным прогоном и генерацией итогового текста. Next.js подходит, потому что это full-stack framework для веба: можно держать и интерфейс, и серверные обработчики в одном проекте, без отдельного backend-сервиса. Для тебя это уменьшает количество движущихся частей и упрощает сборку MVP. Next.js официально позиционируется как framework для full-stack web apps и поддерживает разные варианты деплоя. ([nextjs.org](https://nextjs.org/docs?utm_source=chatgpt.com)) | Да. Сам framework бесплатный и open-source. ([nextjs.org](https://nextjs.org/governance?utm_source=chatgpt.com)) | **Да, очень хорошо.** Claude и ChatGPT стабильно пишут код на Next.js/TypeScript, потому что это один из самых типовых стеков для AI-assisted веб-разработки. Для твоего проекта это плюс: легче просить у моделей сразу готовые страницы, формы, API route handlers и типы. |
-| UI-слой | **Tailwind CSS + shadcn/ui** | У тебя интерфейс должен быть утилитарным: карточка задачи, статусы, блоки “что есть / чего нет”, вопросы, финальный текст. Tailwind ускоряет сборку таких экранов, а shadcn/ui даёт готовые, но редактируемые компоненты без тяжёлой дизайн-системы. Для тебя это важно, потому что нужен не “красивый маркетинговый сайт”, а быстрый рабочий интерфейс. Tailwind — utility-first CSS framework; shadcn/ui — open-source набор настраиваемых компонентов. Причём shadcn прямо пишет, что их CLI сделан “for coding agents”. ([tailwindcss.com](https://tailwindcss.com/?utm_source=chatgpt.com)) | Да. Tailwind бесплатный. shadcn/ui тоже open-source. ([ui.shadcn.com](https://ui.shadcn.com/?utm_source=chatgpt.com)) | **Да, очень хорошо.** Для AI это один из самых удобных UI-стеков: модели хорошо генерируют Tailwind-классы и компоненты shadcn. Для твоего проекта это снижает риск увязнуть в верстке. |
-| База данных + backend-утилиты | **Supabase** | Тебе нужно хранить карточки задач, разборы, вопросы, ответы клиента и версии “понимания задачи”. Supabase закрывает это одним сервисом: Postgres, API, auth и storage, если понадобится позже. Для MVP это лучше, чем собирать отдельно БД, ORM и backend. У Supabase есть free plan; сам сервис позиционируется как Postgres development platform с базой, auth, storage и edge functions. ([supabase.com](https://supabase.com/pricing?utm_source=chatgpt.com)) | Да. Есть Free plan; в changelog отдельно подтверждается, что free-tier для БД сохраняется с лимитом 500 MB. ([supabase.com](https://supabase.com/pricing?utm_source=chatgpt.com)) | **Да, хорошо.** ChatGPT и Claude уверенно пишут SQL, schema, Supabase client code и policy-логику. Плюс у Supabase уже есть официальный коннектор для Claude, что косвенно показывает зрелость экосистемы под AI workflows. ([supabase.com](https://supabase.com/blog/supabase-is-now-an-official-claude-connector?utm_source=chatgpt.com)) |
-| Хостинг | **Vercel Hobby** | Для твоего MVP это самый прямой путь: Next.js нативно под него заточен, деплой простой, есть preview links, не нужно настраивать сервер вручную. При бюджете до $5/мес это сильный аргумент: Hobby plan бесплатный и подходит для personal/small-scale apps. ([vercel.com](https://vercel.com/pricing?utm_source=chatgpt.com)) | Да. Hobby — free forever. ([vercel.com](https://vercel.com/pricing?utm_source=chatgpt.com)) | **Да, очень хорошо.** AI обычно без ошибок генерирует конфиг, env-переменные, route handlers и деплой под Vercel, потому что стек массовый и хорошо документирован. |
-| AI-анализ текста | **OpenAI API (Responses API + GPT-5.4 nano как дефолт)** | Твоё ядро — не чат ради чата, а структурный разбор запроса: найти пробелы, противоречия, задать вопросы и собрать “понимание задачи”. Для этого нужен один LLM-провайдер с предсказуемым API. Я бы брал Responses API и начинал с GPT-5.4 nano, потому что у тебя очень жёсткий бюджет: nano заметно дешевле старших моделей. При необходимости можно точечно переключать отдельные сценарии на GPT-5.4 mini. OpenAI указывает актуальные цены по моделям отдельно; у GPT-5.4 nano вход стоит $0.20 за 1M токенов, выход — $1.25 за 1M токенов. ([developers.openai.com](https://developers.openai.com/api/docs/models/gpt-5.4-nano?utm_source=chatgpt.com)) | Не как тариф. Бесплатного постоянного API-tier нет; это usage-based оплата. Для твоего текстового MVP это ещё терпимо, если держать короткие промпты и не включать голос/файлы в первой версии. ([developers.openai.com](https://developers.openai.com/api/docs/pricing?utm_source=chatgpt.com)) | **Да, очень хорошо.** Claude и ChatGPT хорошо пишут интеграцию с OpenAI API, в том числе серверные вызовы, схемы JSON-ответов и prompt templates. Для твоего проекта это ключевой плюс, потому что именно AI-логику ты будешь много переписывать. |
+| Фронтенд | **Один статический файл `Assistant.html` (HTML + CSS + Vanilla JS)** | Текущий MVP держит интерфейс, стили и клиентскую логику в одном файле без сборки. Это снижает сложность поддержки и позволяет открыть приложение локально прямо в браузере. | Да | **Да.** Изменения легко делать точечно внутри одного файла. |
+| Локальное состояние | **`localStorage` (`editorassistant.v1`)** | Нужно восстановить введённый бриф, ответы клиента и текущий экран без аккаунтов и базы данных. | Да | **Да.** Простая браузерная API без инфраструктуры. |
+| Локальный анализ | **Эвристики в `CATEGORIES` и `CONTRADICTION_RULES`** | Приложение остаётся полезным без настроенного AI: категории, пробелы и типовые противоречия считаются на клиенте. | Да | **Да.** Правила можно расширять без изменения архитектуры. |
+| AI-анализ | **Netlify Function `netlify/functions/analyze-brief.js` + OpenAI Responses API** | AI-режим даёт более глубокий структурированный разбор, но ключ OpenAI не попадает во фронтенд. Если функция или API недоступны, интерфейс откатывается к эвристикам. | Netlify free tier + usage-based OpenAI API | **Да.** Серверная функция изолирована и возвращает ожидаемый JSON-контракт. |
+| Хостинг | **Netlify** | Репозиторий публикуется из корня, `netlify.toml` задаёт `publish = "."` и редирект `/` → `/Assistant.html`. | Да, для MVP | **Да.** Конфигурация минимальная. |
+| Вспомогательный CLI | **`ask_ai.py` + `python-dotenv` + `openai` SDK** | Утилита для тестовых запросов к OpenAI отдельно от основного веб-сценария. | OpenAI API usage-based | **Да.** Не влияет на работу приложения. |
+
+```text
+[Assistant.html]
+      |
+      | localStorage: editorassistant.v1
+      v
+[Эвристики: CATEGORIES + CONTRADICTION_RULES]
+      |
+      +--> fallback-результат
+      |
+      +-- при AI-режиме --> [Netlify Function: analyze-brief.js]
+                              |
+                              | OPENAI_API_KEY на сервере
+                              v
+                         [OpenAI Responses API]
+```
+
+## Implementation Notes
+
+- Текущая реализация — статический MVP с optional AI-режимом, а не Next.js/Supabase/Vercel-приложение.
+- Основной пользовательский поток остаётся: ввод запроса → разбор → ответы клиента → повторный прогон → понимание задачи.
+- Для будущих расширений (история карточек, авторизация, память заказчика, интеграции) можно отдельно пересмотреть стек, но текущий код не требует фреймворка или базы данных.
