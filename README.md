@@ -131,6 +131,7 @@
 | `netlify.toml` | Настройки публикации на Netlify и редирект `/` |
 | `ask_ai.py` | Вспомогательная CLI-утилита для тестового запроса к OpenAI |
 | `README.md` | Инструкция по запуску, AI-режиму и публикации |
+| `PRODUCT_SCENARIOS.md` | Источник правды по текущим продуктовым сценариям MVP |
 | `spec.md` | PRD, требования и текущий стек |
 | `AGENTS.md` / `.cursorrules` | Правила работы агентов с проектом |
 
@@ -144,6 +145,7 @@ Assistant/
 |-- netlify.toml
 |-- ask_ai.py
 |-- README.md
+|-- PRODUCT_SCENARIOS.md
 `-- spec.md
 ```
 
