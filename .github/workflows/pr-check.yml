@@ -1,0 +1,110 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    name: Static checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Netlify Function syntax
+        run: node --check netlify/functions/analyze-brief.js
+
+      - name: Check Python helper syntax
+        run: python3 -m py_compile ask_ai.py
+
+  secret-wiring-check:
+    name: Secret wiring check
+    runs-on: ubuntu-latest
+    needs: static-checks
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify OPENAI_API_KEY is provided by GitHub Secrets
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY GitHub Secret is not configured."
+            exit 1
+          fi
+
+          echo "::add-mask::${OPENAI_API_KEY}"
+          echo "OPENAI_API_KEY is configured in GitHub Secrets."
+
+      - name: Verify analyze-brief reads OPENAI_API_KEY from environment
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          node <<'NODE'
+          const { handler } = require('./netlify/functions/analyze-brief.js');
+
+          if (!process.env.OPENAI_API_KEY) {
+            throw new Error('OPENAI_API_KEY is not available in the environment.');
+          }
+
+          const expectedAuthorization = `Bearer ${process.env.OPENAI_API_KEY}`;
+          let sawExpectedAuthorization = false;
+
+          global.fetch = async (url, options) => {
+            if (url !== 'https://api.openai.com/v1/responses') {
+              throw new Error('Unexpected OpenAI endpoint.');
+            }
+
+            if (!options || !options.headers || options.headers.Authorization !== expectedAuthorization) {
+              throw new Error('Netlify Function did not read OPENAI_API_KEY from process.env.');
+            }
+
+            sawExpectedAuthorization = true;
+
+            return {
+              ok: true,
+              json: async () => ({
+                output_text: JSON.stringify({
+                  contradictions: [],
+                  questions: [],
+                  categorySignals: [],
+                  shortTaskUnderstanding: ['Smoke check passed.']
+                })
+              })
+            };
+          };
+
+          async function main() {
+            const response = await handler({
+              httpMethod: 'POST',
+              body: JSON.stringify({
+                rawText: 'Клиент просит проверить бриф и подготовить понятный разбор задачи.'
+              })
+            });
+
+            if (response.statusCode !== 200) {
+              throw new Error(`Expected 200 from handler, got ${response.statusCode}.`);
+            }
+
+            if (!sawExpectedAuthorization) {
+              throw new Error('Authorization header was not checked.');
+            }
+          }
+
+          main().catch(error => {
+            console.error(error.message);
+            process.exit(1);
+          });
+          NODE
