@@ -288,6 +288,57 @@ body {
 .textarea-answers::placeholder { color: var(--text-dim); }
 .textarea-answers:focus { border-color: var(--border-hover); }
 
+/* DESIGN SYSTEM SCREEN */
+.design-system-screen { padding: 28px 0 56px; }
+.ds-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.ds-hero h1 { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+.ds-lead { font-size: 15px; line-height: 1.65; color: var(--text-muted); max-width: 680px; }
+.ds-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+.ds-panel {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  min-width: 0;
+}
+.ds-panel-wide { grid-column: span 6; }
+.ds-panel-third { grid-column: span 4; }
+.ds-panel-full { grid-column: 1 / -1; }
+.ds-panel h2 { font-size: 16px; font-weight: 600; line-height: 1.25; margin-bottom: 10px; }
+.ds-panel h3 { font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; margin: 14px 0 8px; }
+.ds-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.ds-row:last-child { border-bottom: 0; }
+.ds-label { font-size: 13px; color: var(--text-muted); min-width: 0; }
+.ds-value { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+.ds-swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ds-swatch { display: flex; align-items: flex-end; min-height: 70px; border: 1px solid var(--border-hover); border-radius: 10px; padding: 8px; background: var(--swatch); }
+.ds-swatch span { font-size: 12px; line-height: 1.35; color: var(--label-color, var(--text)); }
+.ds-type-sample { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.ds-type-sample:last-child { border-bottom: 0; }
+.ds-type-meta { display: block; margin-top: 2px; font-size: 12px; color: var(--text-dim); }
+.ds-button-stack { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ds-button-stack + .ds-button-stack { margin-top: 10px; }
+.ds-component-stack { display: grid; gap: 8px; }
+.ds-compact-card { margin-bottom: 0; }
+.ds-compact-card.category-card { opacity: 1; transform: none; transition: border-color 0.2s; }
+.ds-compact-card .cat-header { margin-bottom: 8px; }
+.ds-compact-card .original-card,
+.ds-compact-card.original-card { margin-bottom: 0; max-height: none; }
+.ds-textarea { min-height: 118px; max-height: 118px; margin-bottom: 8px; }
+.ds-spacing-list { display: grid; gap: 8px; }
+.ds-spacing-row { display: grid; grid-template-columns: 70px 1fr 56px; align-items: center; gap: 10px; }
+.ds-spacing-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.04); overflow: hidden; }
+.ds-spacing-bar { height: 100%; width: var(--space); max-width: 100%; border-radius: 999px; background: var(--accent); }
+.ds-findings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ds-finding { border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--bg); }
+.ds-finding strong { display: block; font-size: 14px; margin-bottom: 6px; }
+.ds-finding p { font-size: 13px; line-height: 1.55; color: var(--text-muted); }
+.ds-standard { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.6; color: var(--text-muted); }
+
 @media (max-width: 768px) {
   .mobile-accordion-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
   .mobile-accordion-toggle h2 { font-size: 16px; margin-bottom: 0; }
@@ -295,6 +346,11 @@ body {
   .mobile-accordion-body.open { display: block; }
   .col-left-desktop-only { display: none; }
   .col-left-mobile-only { display: block; }
+  .ds-hero { display: block; }
+  .ds-hero .btn-ghost { margin-top: 14px; }
+  .ds-panel-wide, .ds-panel-third { grid-column: 1 / -1; }
+  .ds-findings { grid-template-columns: 1fr; }
+  .ds-swatches { grid-template-columns: 1fr; }
 }
 @media (min-width: 769px) { .col-left-mobile-only { display: none; } }
 
@@ -379,6 +435,158 @@ body {
         <button class="btn-cta" id="btnUpdateAnalysis">Обновить разбор →</button>
         <p class="cta-note" style="margin-top:10px">Повторяйте, пока все категории не&nbsp;станут зелёными.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- DESIGN SYSTEM -->
+  <div id="screenDesignSystem" class="screen design-system-screen">
+    <div class="ds-hero">
+      <div>
+        <h1>Дизайн-система</h1>
+        <p class="ds-lead">Витрина собрана из текущих значений интерфейса: цвета, типографика, кнопки, карточки, поля и отступы. Ниже отдельно отмечены места, где стиль уже разошёлся.</p>
+      </div>
+      <a class="btn-ghost" href="/">Открыть приложение</a>
+    </div>
+
+    <div class="ds-grid">
+      <section class="ds-panel ds-panel-wide">
+        <h2>Цвета</h2>
+        <div class="ds-swatches">
+          <div class="ds-swatch" style="--swatch: var(--bg)"><span>--bg<br>#0D0D10</span></div>
+          <div class="ds-swatch" style="--swatch: var(--card)"><span>--card<br>#17171B</span></div>
+          <div class="ds-swatch" style="--swatch: var(--card-hover)"><span>--card-hover<br>#1B1B1F</span></div>
+          <div class="ds-swatch" style="--swatch: var(--text); --label-color: var(--bg)"><span>--text<br>#EDEDEF</span></div>
+          <div class="ds-swatch" style="--swatch: var(--text-muted); --label-color: var(--bg)"><span>--text-muted<br>#9B9BA3</span></div>
+          <div class="ds-swatch" style="--swatch: var(--text-dim)"><span>--text-dim<br>#65656D</span></div>
+          <div class="ds-swatch" style="--swatch: var(--accent)"><span>--accent<br>#3B82F6</span></div>
+          <div class="ds-swatch" style="--swatch: var(--accent-hover)"><span>--accent-hover<br>#2563EB</span></div>
+          <div class="ds-swatch" style="--swatch: var(--green); --label-color: var(--bg)"><span>--green<br>#22C55E</span></div>
+          <div class="ds-swatch" style="--swatch: var(--yellow); --label-color: var(--bg)"><span>--yellow<br>#F59E0B</span></div>
+          <div class="ds-swatch" style="--swatch: var(--red)"><span>--red<br>#EF4444</span></div>
+          <div class="ds-swatch" style="--swatch: var(--orange)"><span>--orange<br>#F97316</span></div>
+        </div>
+      </section>
+
+      <section class="ds-panel ds-panel-wide">
+        <h2>Типографика</h2>
+        <div class="ds-type-sample">
+          <div style="font-size:32px;font-weight:700;line-height:1.2">Проверьте запрос</div>
+          <span class="ds-type-meta">H1: 32px / 700 / 1.2, Inter</span>
+        </div>
+        <div class="ds-type-sample">
+          <div style="font-size:22px;font-weight:700;line-height:1.25">Разбор</div>
+          <span class="ds-type-meta">H2: 22px / 700 / 1.25</span>
+        </div>
+        <div class="ds-type-sample">
+          <div style="font-size:18px;font-weight:600">Вопросы, которые стоит задать</div>
+          <span class="ds-type-meta">Section: 18px / 600</span>
+        </div>
+        <div class="ds-type-sample">
+          <div style="font-size:15px;line-height:1.65;color:var(--text-muted)">Подзаголовок и большие поля используют 15px с line-height 1.65.</div>
+          <span class="ds-type-meta">Body large: 15px / 1.65</span>
+        </div>
+        <div class="ds-type-sample">
+          <div style="font-size:14px;line-height:1.6;color:var(--text-muted)">Основной текст карточек, вопросов и найденных фрагментов.</div>
+          <span class="ds-type-meta">Body: 14px / 1.6</span>
+        </div>
+        <div class="ds-type-sample">
+          <span class="understanding-label">Контекст</span>
+          <span class="ds-type-meta">Meta label: 13px / 600 / uppercase / 0.04em</span>
+        </div>
+      </section>
+
+      <section class="ds-panel ds-panel-third">
+        <h2>Кнопки</h2>
+        <div class="ds-button-stack">
+          <button class="btn-cta">Разобрать запрос →</button>
+          <button class="btn-cta" disabled>Неактивна</button>
+        </div>
+        <div class="ds-button-stack">
+          <button class="btn-ghost">Изменить запрос</button>
+          <button class="btn-demo">▶ Вставить демо</button>
+          <button class="btn-copy">📋</button>
+        </div>
+        <div class="ds-button-stack">
+          <button class="btn-cta" style="background:var(--green)">Собрать понимание задачи</button>
+        </div>
+        <div class="ds-standard">Эталон: обычная главная кнопка остаётся синей; зелёный лучше оставить для статуса успеха и подтверждений.</div>
+      </section>
+
+      <section class="ds-panel ds-panel-third">
+        <h2>Карточки и статусы</h2>
+        <div class="ds-component-stack">
+          <div class="category-card ds-compact-card">
+            <div class="cat-header"><span class="cat-title">Задача</span><span class="badge badge-green">Есть</span></div>
+            <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px">Что нужно сделать редактору</div>
+            <div class="cat-found">Нужно подготовить статью для HR-директоров.</div>
+          </div>
+          <div class="question-card ds-compact-card">
+            <div class="q-content">
+              <span class="q-num">1.</span>
+              <div><span class="q-text">Какой результат клиент должен согласовать перед стартом?</span><div class="q-meta"><span class="pill pill-danger">Must</span></div></div>
+            </div>
+            <button class="btn-copy">📋</button>
+          </div>
+          <div class="contradiction-card ds-compact-card">
+            <div class="contradiction-header"><span style="color:var(--orange);font-size:16px">⚠</span><span class="contradiction-title">Разный тон</span></div>
+            <div class="contradiction-body">В одном запросе встречаются «строго» и «дружелюбно».</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ds-panel ds-panel-third">
+        <h2>Поля форм</h2>
+        <textarea class="textarea-main ds-textarea" readonly>Напишите статью про продукт для HR-директоров. Дедлайн — пятница.</textarea>
+        <div class="ds-row"><span class="ds-label">Фон</span><span class="ds-value">--card</span></div>
+        <div class="ds-row"><span class="ds-label">Border</span><span class="ds-value">--border → --border-hover</span></div>
+        <div class="ds-row"><span class="ds-label">Radius / padding</span><span class="ds-value">14px / 20px</span></div>
+        <div class="ds-row"><span class="ds-label">Text</span><span class="ds-value">15px / 1.65</span></div>
+      </section>
+
+      <section class="ds-panel ds-panel-wide">
+        <h2>Отступы и сетка</h2>
+        <div class="ds-spacing-list">
+          <div class="ds-spacing-row"><span class="ds-label">gap small</span><div class="ds-spacing-track"><div class="ds-spacing-bar" style="--space:6px"></div></div><span class="ds-value">6px</span></div>
+          <div class="ds-spacing-row"><span class="ds-label">card gap</span><div class="ds-spacing-track"><div class="ds-spacing-bar" style="--space:10px"></div></div><span class="ds-value">10px</span></div>
+          <div class="ds-spacing-row"><span class="ds-label">footer gap</span><div class="ds-spacing-track"><div class="ds-spacing-bar" style="--space:14px"></div></div><span class="ds-value">14px</span></div>
+          <div class="ds-spacing-row"><span class="ds-label">card pad</span><div class="ds-spacing-track"><div class="ds-spacing-bar" style="--space:20px"></div></div><span class="ds-value">20px</span></div>
+          <div class="ds-spacing-row"><span class="ds-label">container</span><div class="ds-spacing-track"><div class="ds-spacing-bar" style="--space:24px"></div></div><span class="ds-value">24px</span></div>
+          <div class="ds-spacing-row"><span class="ds-label">grid gap</span><div class="ds-spacing-track"><div class="ds-spacing-bar" style="--space:32px"></div></div><span class="ds-value">32px</span></div>
+          <div class="ds-spacing-row"><span class="ds-label">screen top</span><div class="ds-spacing-track"><div class="ds-spacing-bar" style="--space:40px"></div></div><span class="ds-value">40px</span></div>
+        </div>
+        <div class="ds-standard">Сетка разбора: контейнер 1080px, две колонки 360px + 1fr, мобильный перелом 768px.</div>
+      </section>
+
+      <section class="ds-panel ds-panel-wide">
+        <h2>Размеры и радиусы</h2>
+        <div class="ds-row"><span class="ds-label">Header</span><span class="ds-value">52px</span></div>
+        <div class="ds-row"><span class="ds-label">Textarea main</span><span class="ds-value">200-400px</span></div>
+        <div class="ds-row"><span class="ds-label">Textarea answers</span><span class="ds-value">180-360px</span></div>
+        <div class="ds-row"><span class="ds-label">Original card</span><span class="ds-value">max 320px</span></div>
+        <div class="ds-row"><span class="ds-label">Cards / inputs</span><span class="ds-value">14px radius</span></div>
+        <div class="ds-row"><span class="ds-label">CTA / ghost</span><span class="ds-value">10px radius</span></div>
+        <div class="ds-row"><span class="ds-label">Demo button</span><span class="ds-value">8px radius</span></div>
+        <div class="ds-row"><span class="ds-label">Copy / header badge</span><span class="ds-value">6px radius</span></div>
+        <div class="ds-row"><span class="ds-label">Pills / badges</span><span class="ds-value">999px radius</span></div>
+      </section>
+
+      <section class="ds-panel ds-panel-full">
+        <h2>Где стиль разошёлся</h2>
+        <div class="ds-findings">
+          <div class="ds-finding">
+            <strong>Кнопки</strong>
+            <p>Есть синяя основная CTA, ghost, dashed demo, и отдельная зелёная CTA через inline-style. Рекомендация: зелёный использовать не как основной action, а как успех или статус.</p>
+          </div>
+          <div class="ds-finding">
+            <strong>Близкие цвета</strong>
+            <p>Кроме токенов есть `#fff` для CTA-текста и `#8ebcff` для AI-pill. Рекомендация: оставить `#fff` для CTA, а AI-pill вынести в токен, если бейдж останется.</p>
+          </div>
+          <div class="ds-finding">
+            <strong>Границы и радиусы</strong>
+            <p>Border-значения идут от 0.04 до 0.15 opacity, радиусы — 6, 8, 10, 14 и 999px. Рекомендация: 14 для карточек/полей, 10 для кнопок, 999 для статусов.</p>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
