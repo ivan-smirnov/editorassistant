@@ -10,3 +10,13 @@
   from = "/"
   to = "/Assistant.html"
   status = 200
+
+[[redirects]]
+  from = "/design-system"
+  to = "/Assistant.html"
+  status = 200
+
+[[redirects]]
+  from = "/design-system/"
+  to = "/Assistant.html"
+  status = 200

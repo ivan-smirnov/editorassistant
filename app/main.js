@@ -13,6 +13,10 @@
   const state = State.state;
   const persistStateDebounced = Dom.debounce(persistState, 400);
 
+  function isDesignSystemRoute() {
+    return window.location.pathname.replace(/\/+$/, '') === '/design-system';
+  }
+
   function persistState() {
     Persistence.saveState({
       v: 1,
@@ -24,11 +28,20 @@
   }
 
   function activateScreen(screen) {
-    [dom.screen1, dom.screen2, dom.screen3].forEach((el, i) => {
+    [dom.screen1, dom.screen2, dom.screen3, dom.screenDesignSystem].forEach((el, i) => {
       const on = i === screen - 1;
       el.classList.toggle('active', on);
       el.classList.toggle('visible', on);
     });
+  }
+
+  function activateDesignSystem() {
+    document.title = 'Дизайн-система — Ассистент для редактора';
+    [dom.screen1, dom.screen2, dom.screen3, dom.screenDesignSystem].forEach(el => {
+      el.classList.toggle('active', el === dom.screenDesignSystem);
+      el.classList.toggle('visible', false);
+    });
+    requestAnimationFrame(() => requestAnimationFrame(() => dom.screenDesignSystem.classList.add('visible')));
   }
 
   function restoreState() {
@@ -186,6 +199,11 @@
   }
 
   function init() {
+    if (isDesignSystemRoute()) {
+      activateDesignSystem();
+      return;
+    }
+
     bindEvents();
     window.addEventListener('beforeunload', persistState);
     if (!restoreState()) {
