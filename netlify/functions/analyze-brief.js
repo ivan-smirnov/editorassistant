@@ -1,3 +1,5 @@
+const { notifyTelegramFailure } = require('./lib/telegram-notifier');
+
 const AI_OUTPUT_SCHEMA = {
   contradictions: [{ type: 'string', evidence: 'string', explanation: 'string', confidence: '0-1' }],
   questions: [{ priority: 'must|should', text: 'string', rationale: 'string', relatedContradictionType: 'string' }],
@@ -76,12 +78,33 @@ function json(statusCode, body) {
   };
 }
 
+function readRequestId(event) {
+  const headers = event.headers || {};
+  return headers['x-nf-request-id'] || headers['x-request-id'] || headers['X-Nf-Request-Id'] || '';
+}
+
+async function notifyAiFailure(event, rawText, reason, details = {}) {
+  await notifyTelegramFailure({
+    title: 'AI-разбор брифа не выполнился',
+    reason,
+    details: {
+      function: 'analyze-brief',
+      stage: details.stage,
+      status: details.status,
+      requestId: readRequestId(event),
+      rawTextLength: rawText ? rawText.length : 0,
+      note: details.note
+    }
+  });
+}
+
 exports.handler = async function handler(event) {
   if (event.httpMethod !== 'POST') {
     return json(405, { error: 'Method not allowed. Use POST.' });
   }
 
   if (!process.env.OPENAI_API_KEY) {
+    await notifyAiFailure(event, '', 'OPENAI_API_KEY is not configured.', { stage: 'config' });
     return json(500, { error: 'OPENAI_API_KEY is not configured.' });
   }
 
@@ -120,17 +143,24 @@ exports.handler = async function handler(event) {
 
     if (!response.ok) {
       const details = await response.text();
+      await notifyAiFailure(event, rawText, `OpenAI request failed with status ${response.status}.`, {
+        stage: 'openai_response',
+        status: response.status,
+        note: details
+      });
       return json(response.status, { error: details || `OpenAI request failed with status ${response.status}.` });
     }
 
     const payload = await response.json();
     const rawResponseText = readResponseText(payload);
     if (!rawResponseText) {
+      await notifyAiFailure(event, rawText, 'Empty response from model.', { stage: 'model_response' });
       return json(502, { error: 'Empty response from model.' });
     }
 
     const jsonString = extractJsonStringFromText(rawResponseText);
     if (!jsonString) {
+      await notifyAiFailure(event, rawText, 'Model response does not contain valid JSON.', { stage: 'model_json' });
       return json(502, { error: 'Model response does not contain valid JSON.' });
     }
 
@@ -140,6 +170,9 @@ exports.handler = async function handler(event) {
     const msg = error && error.name === 'AbortError'
       ? 'OpenAI request timed out.'
       : (error && error.message ? error.message : 'Unknown server error.');
+    await notifyAiFailure(event, rawText, msg, {
+      stage: error && error.name === 'AbortError' ? 'timeout' : 'exception'
+    });
     return json(502, { error: msg });
   } finally {
     clearTimeout(timer);
