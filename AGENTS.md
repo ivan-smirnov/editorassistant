@@ -57,6 +57,9 @@
 Переменные окружения (без значений):
 
 - **`OPENAI_API_KEY`**: нужен для `ask_ai.py` и для `netlify/functions/analyze-brief.js` при локальном `netlify dev` / в Netlify Environment variables.
+- **`TELEGRAM_BOT_TOKEN`**: опционально нужен для Telegram-уведомлений о сбоях серверного AI-разбора; хранить только в `.env` / Netlify Environment variables.
+- **`TELEGRAM_CHAT_ID`**: опционально нужен для чата-получателя Telegram-уведомлений; находится через `node scripts/telegram-bot.js chat-id`.
+- **`MONITOR_SITE_URL`**: опционально нужен для scheduled-проверки production-сайта; URL главной страницы, который должен возвращать HTTP 200.
 - Других обязательных переменных окружения сейчас нет.
 
 ## Визуальный спек — ASCII-схемы

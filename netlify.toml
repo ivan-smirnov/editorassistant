@@ -20,3 +20,10 @@
   from = "/design-system/"
   to = "/Assistant.html"
   status = 200
+
+[functions."monitor-homepage"]
+  schedule = "*/5 * * * *"
+
+[functions."monitor-heartbeat"]
+  # Netlify cron runs in UTC: 06:00 UTC = 09:00 Europe/Moscow.
+  schedule = "0 6 * * *"

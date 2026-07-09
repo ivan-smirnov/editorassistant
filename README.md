@@ -110,17 +110,103 @@
 
 ### Локальная проверка функции
 
-1. Создайте локальный `.env` в корне проекта и добавьте:
+1. Создайте локальный `.env` в корне проекта по примеру `.env.example` и добавьте:
    - `OPENAI_API_KEY=...`
 2. Запустите Netlify Dev:
    - `netlify dev`
 3. Откройте локальный URL из Netlify Dev и проверьте сценарий кнопки **Разобрать запрос**.
+
+## Настройка Telegram-уведомлений о сбоях
+
+Telegram-уведомления работают только на серверной стороне Netlify Functions. Фронтенд не получает токен бота и не отправляет сообщения в Telegram напрямую. Сейчас уведомление уходит, если серверный AI-разбор в `analyze-brief` падает из-за конфигурации, таймаута, ошибки OpenAI или невалидного ответа модели.
+
+```text
+[Assistant.html]
+      |
+      | POST /.netlify/functions/analyze-brief
+      v
+[Netlify Function: analyze-brief]
+      |
+      +--> OpenAI ok -> вернуть JSON-разбор
+      |
+      +--> OpenAI error/timeout/invalid JSON
+             |
+             v
+      [telegram-notifier]
+             |
+             | TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID
+             v
+      [Telegram Bot API]
+             |
+             v
+      [Личное сообщение о сбое]
+```
+
+Переменные окружения:
+
+- `TELEGRAM_BOT_TOKEN` — токен Telegram-бота из BotFather.
+- `TELEGRAM_CHAT_ID` — ID чата, куда отправлять уведомления.
+
+### Как найти chat_id
+
+1. Добавьте `TELEGRAM_BOT_TOKEN` в локальный `.env` по примеру `.env.example` или в переменные окружения shell.
+2. Напишите любое сообщение своему боту в Telegram.
+3. Запустите команду:
+   - `node scripts/telegram-bot.js chat-id`
+4. Скопируйте найденный ID в `TELEGRAM_CHAT_ID`.
+5. Проверьте отправку:
+   - `node scripts/telegram-bot.js test`
+
+Для production добавьте обе переменные в Netlify: **Site configuration → Environment variables**. После изменения переменных окружения нужен redeploy.
+
+## Настройка HTTP-мониторинга production
+
+Мониторинг проверяет только техническую доступность главной страницы production-сайта. Он не отправляет клиентские тексты, не запускает AI-разбор и не проверяет качество результата. Если главная страница возвращает не `200` или не отвечает до timeout, бот сразу присылает алерт в Telegram. Раз в день отдельная scheduled-функция отправляет короткое «работаю», чтобы было видно, что сама проверка жива.
+
+```text
+[Netlify production deploy: main]
+          |
+          | каждые 5 минут
+          v
+[monitor-homepage]
+          |
+          | GET MONITOR_SITE_URL
+          v
+[Главная страница продукта]
+          |
+          +--> HTTP 200 -> молчать
+          |
+          +--> не 200 / timeout / fetch error
+                 |
+                 v
+          [Telegram alert]
+
+[monitor-heartbeat]
+          |
+          | 1 раз в день, 06:00 UTC / 09:00 MSK
+          v
+          [Telegram: "Мониторинг Ассистента работает"]
+```
+
+Переменные окружения для production в Netlify:
+
+- `MONITOR_SITE_URL` — URL главной страницы production-сайта, например `https://example.netlify.app/`.
+- `TELEGRAM_BOT_TOKEN` — токен Telegram-бота.
+- `TELEGRAM_CHAT_ID` — ID чата для уведомлений.
+
+Расписание задано в `netlify.toml`:
+
+- `monitor-homepage`: каждые 5 минут.
+- `monitor-heartbeat`: раз в день в 06:00 UTC, то есть примерно в 09:00 по Москве.
+
+После добавления или изменения переменных окружения в Netlify нужен redeploy.
 
 ## Важно про приватность
 
 - В AI-режиме текст брифа отправляется во внешний сервис через вашу Netlify Function.
 - Не используйте AI-режим для чувствительных данных, если политика вашей команды это запрещает.
 - Не храните ключи в репозитории и не коммитьте `.env`/секреты.
+- Telegram-уведомления о сбоях не отправляют текст клиентского брифа: в сообщение попадают только техническая причина, этап ошибки и длина текста.
 
 ## Файлы
 
@@ -128,8 +214,13 @@
 |------|------------|
 | `Assistant.html` | Разметка, стили, логика — один файл |
 | `netlify/functions/analyze-brief.js` | Serverless-функция для AI-разбора через OpenAI |
+| `netlify/functions/lib/telegram-notifier.js` | Серверная отправка Telegram-уведомлений о сбоях |
+| `netlify/functions/monitor-homepage.js` | Scheduled-проверка production URL и Telegram-алерт при не-`200` |
+| `netlify/functions/monitor-heartbeat.js` | Ежедневное Telegram-сообщение, что мониторинг жив |
+| `scripts/telegram-bot.js` | CLI для поиска `chat_id` и тестовой отправки в Telegram |
 | `netlify.toml` | Настройки публикации на Netlify и редирект `/` |
 | `ask_ai.py` | Вспомогательная CLI-утилита для тестового запроса к OpenAI |
+| `.env.example` | Шаблон локальных переменных окружения без секретных значений |
 | `README.md` | Инструкция по запуску, AI-режиму и публикации |
 | `PRODUCT_SCENARIOS.md` | Источник правды по текущим продуктовым сценариям MVP |
 | `spec.md` | PRD, требования и текущий стек |
@@ -141,7 +232,14 @@ Assistant/
 |   `-- UI + CSS + основная логика
 |-- netlify/
 |   `-- functions/
-|       `-- analyze-brief.js
+|       |-- analyze-brief.js
+|       |-- monitor-homepage.js
+|       |-- monitor-heartbeat.js
+|       `-- lib/
+|           `-- telegram-notifier.js
+|-- scripts/
+|   `-- telegram-bot.js
+|-- .env.example
 |-- netlify.toml
 |-- ask_ai.py
 |-- README.md
