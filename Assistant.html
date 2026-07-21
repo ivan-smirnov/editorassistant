@@ -339,6 +339,36 @@ body {
 .ds-finding p { font-size: 13px; line-height: 1.55; color: var(--text-muted); }
 .ds-standard { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.6; color: var(--text-muted); }
 
+/* SHOWCASE SCREEN */
+.showcase-screen { padding: 32px 0 80px; }
+.showcase-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+.showcase-eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.showcase-hero h1 { font-size: 36px; line-height: 1.15; letter-spacing: -0.025em; margin-bottom: 10px; }
+.showcase-lead { max-width: 650px; color: var(--text-muted); font-size: 15px; }
+.showcase-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.showcase-actions a { text-decoration: none; }
+.showcase-category { padding-top: 42px; scroll-margin-top: 70px; }
+.showcase-category + .showcase-category { margin-top: 8px; border-top: 1px solid var(--border); }
+.showcase-section-head { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 10px; align-items: start; margin-bottom: 20px; }
+.showcase-index { color: var(--text-dim); font-size: 13px; font-weight: 600; padding-top: 4px; }
+.showcase-category h2 { font-size: 20px; line-height: 1.3; margin-bottom: 4px; }
+.showcase-section-head p { color: var(--text-muted); font-size: 14px; }
+.showcase-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; align-items: start; }
+.showcase-card { min-width: 0; }
+.showcase-frame-bar { width: min(100%, 404px); min-height: 42px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 14px; border: 1px solid var(--border-hover); border-bottom: 0; border-radius: 16px 16px 0 0; background: #17171b; }
+.showcase-frame-title { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 12px; font-weight: 600; }
+.showcase-frame-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.showcase-frame-note { color: var(--text-dim); font-size: 11px; }
+.showcase-device { width: min(100%, 404px); margin: 0 auto; padding: 7px; border-radius: 0 0 30px 30px; background: #202025; box-shadow: 0 24px 60px rgba(0,0,0,0.28); }
+.showcase-device iframe { display: block; width: 100%; height: 780px; border: 0; border-radius: 0 0 22px 22px; background: var(--bg); }
+
 @media (max-width: 768px) {
   .mobile-accordion-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
   .mobile-accordion-toggle h2 { font-size: 16px; margin-bottom: 0; }
@@ -351,6 +381,11 @@ body {
   .ds-panel-wide, .ds-panel-third { grid-column: 1 / -1; }
   .ds-findings { grid-template-columns: 1fr; }
   .ds-swatches { grid-template-columns: 1fr; }
+  .showcase-hero { display: block; }
+  .showcase-hero h1 { font-size: 30px; }
+  .showcase-actions { justify-content: flex-start; margin-top: 18px; }
+  .showcase-gallery { grid-template-columns: 1fr; gap: 42px; }
+  .showcase-section-head { grid-template-columns: 38px minmax(0, 1fr); gap: 10px; }
 }
 @media (min-width: 769px) { .col-left-mobile-only { display: none; } }
 
@@ -436,6 +471,77 @@ body {
         <p class="cta-note" style="margin-top:10px">Повторяйте, пока все категории не&nbsp;станут зелёными.</p>
       </div>
     </div>
+  </div>
+
+  <!-- SCREEN SHOWCASE -->
+  <div id="screenShowcase" class="screen showcase-screen">
+    <div class="showcase-hero">
+      <div>
+        <div class="showcase-eyebrow">Карта продукта</div>
+        <h1>Витрина экранов</h1>
+        <p class="showcase-lead">Все основные состояния «Ассистента для редактора» в порядке рабочего процесса: от сырого запроса до понимания задачи для согласования.</p>
+      </div>
+      <div class="showcase-actions">
+        <a class="btn-ghost" href="#showcase-system">Системные экраны</a>
+        <a class="btn-cta" href="#showcase-main-flow">К экранам ↓</a>
+      </div>
+    </div>
+
+    <section class="showcase-category" id="showcase-main-flow">
+      <div class="showcase-section-head">
+        <span class="showcase-index">01</span>
+        <div><h2>Основной сценарий</h2><p>Получение клиентского запроса и первый разбор.</p></div>
+      </div>
+      <div class="showcase-gallery">
+        <article class="showcase-card">
+          <div class="showcase-frame-bar"><span class="showcase-frame-title"><span class="showcase-frame-dot"></span>Экран ввода</span><span class="showcase-frame-note">Реальный UI</span></div>
+          <div class="showcase-device"><iframe src="/Assistant.html?showcase-preview=input" title="Экран ввода клиентского запроса" sandbox="allow-scripts allow-forms allow-same-origin" allow="clipboard-write"></iframe></div>
+        </article>
+        <article class="showcase-card">
+          <div class="showcase-frame-bar"><span class="showcase-frame-title"><span class="showcase-frame-dot" style="background:var(--orange)"></span>Экран разбора</span><span class="showcase-frame-note">Реальные правила</span></div>
+          <div class="showcase-device"><iframe src="/Assistant.html?showcase-preview=analysis" title="Экран разбора клиентского запроса" sandbox="allow-scripts allow-forms allow-same-origin" allow="clipboard-write"></iframe></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-category" id="showcase-clarification">
+      <div class="showcase-section-head">
+        <span class="showcase-index">02</span>
+        <div><h2>Уточнение</h2><p>Исходный запрос, текущие статусы и ответы клиента в одном живом сценарии.</p></div>
+      </div>
+      <div class="showcase-gallery">
+        <article class="showcase-card">
+          <div class="showcase-frame-bar"><span class="showcase-frame-title"><span class="showcase-frame-dot" style="background:var(--yellow)"></span>Ответы клиента</span><span class="showcase-frame-note">Демо-данные</span></div>
+          <div class="showcase-device"><iframe src="/Assistant.html?showcase-preview=supplement" title="Экран добавления ответов клиента" sandbox="allow-scripts allow-forms allow-same-origin" allow="clipboard-write"></iframe></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-category" id="showcase-approval">
+      <div class="showcase-section-head">
+        <span class="showcase-index">03</span>
+        <div><h2>Согласование</h2><p>Реальный экран разбора с собранным пониманием задачи.</p></div>
+      </div>
+      <div class="showcase-gallery">
+        <article class="showcase-card">
+          <div class="showcase-frame-bar"><span class="showcase-frame-title"><span class="showcase-frame-dot" style="background:var(--green)"></span>Понимание задачи</span><span class="showcase-frame-note">Реальный компонент</span></div>
+          <div class="showcase-device"><iframe src="/Assistant.html?showcase-preview=understanding" title="Экран понимания задачи" sandbox="allow-scripts allow-forms allow-same-origin" allow="clipboard-write"></iframe></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="showcase-category" id="showcase-system">
+      <div class="showcase-section-head">
+        <span class="showcase-index">04</span>
+        <div><h2>Системные страницы</h2><p>Дизайн-система загружается в том же окружении приложения.</p></div>
+      </div>
+      <div class="showcase-gallery">
+        <article class="showcase-card">
+          <div class="showcase-frame-bar"><span class="showcase-frame-title"><span class="showcase-frame-dot" style="background:var(--text-dim)"></span>Дизайн-система</span><span class="showcase-frame-note">Реальный маршрут</span></div>
+          <div class="showcase-device"><iframe src="/design-system" title="Дизайн-система приложения" loading="lazy" sandbox="allow-scripts allow-forms allow-same-origin"></iframe></div>
+        </article>
+      </div>
+    </section>
   </div>
 
   <!-- DESIGN SYSTEM -->

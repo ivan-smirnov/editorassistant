@@ -9,6 +9,7 @@
       screen1: document.getElementById('screen1'),
       screen2: document.getElementById('screen2'),
       screen3: document.getElementById('screen3'),
+      screenShowcase: document.getElementById('screenShowcase'),
       screenDesignSystem: document.getElementById('screenDesignSystem'),
       originalText: document.getElementById('originalText'),
       originalTextMobile: document.getElementById('originalTextMobile'),

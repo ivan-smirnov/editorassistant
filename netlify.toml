@@ -21,6 +21,16 @@
   to = "/Assistant.html"
   status = 200
 
+[[redirects]]
+  from = "/showcase"
+  to = "/Assistant.html"
+  status = 200
+
+[[redirects]]
+  from = "/showcase/"
+  to = "/Assistant.html"
+  status = 200
+
 [functions."monitor-homepage"]
   schedule = "*/5 * * * *"
 
