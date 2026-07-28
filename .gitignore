@@ -1,2 +1,8 @@
 .env
+.env.database.local
+node_modules/
+deno.lock
 .DS_Store
+
+# Local Netlify folder
+.netlify

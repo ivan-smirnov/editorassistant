@@ -7,6 +7,7 @@
   const Persistence = window.EditorAssistantPersistence;
   const Analysis = window.EditorAssistantAnalysis;
   const AiClient = window.EditorAssistantAiClient;
+  const DatabaseClient = window.EditorAssistantDatabaseClient;
   const Render = window.EditorAssistantRender;
 
   const dom = Dom.getDomRefs();
@@ -163,6 +164,15 @@
     State.setAnalysisResult(result);
   }
 
+  async function loadDatabaseCards() {
+    try {
+      const cards = await DatabaseClient.loadCards();
+      Render.renderDatabaseCards(dom, cards);
+    } catch (error) {
+      if (dom.databaseCards) dom.databaseCards.hidden = true;
+    }
+  }
+
   function copyQuestion(button, index) {
     const item = state.allQuestions[index];
     if (!item) return;
@@ -241,6 +251,12 @@
       Dom.setButtonLoading(btn, 'Анализирую', true);
       try {
         await executeAnalysisPipeline(state.originalText + '\n\n' + answers);
+        try {
+          await DatabaseClient.saveAnswer(state.originalText, answers);
+          Render.renderDatabaseSaveStatus(dom, 'Ответ сохранён в локальной базе.');
+        } catch (error) {
+          Render.renderDatabaseSaveStatus(dom, error.message, true);
+        }
       } finally {
         btn.innerHTML = 'Обновить разбор →';
         Dom.setButtonLoading(btn, '', false);
@@ -278,6 +294,7 @@
     if (showcasePreview && activateShowcasePreview(showcasePreview)) return;
 
     bindEvents();
+    loadDatabaseCards();
     window.addEventListener('beforeunload', persistState);
     if (!restoreState()) {
       dom.screen1.classList.add('active');

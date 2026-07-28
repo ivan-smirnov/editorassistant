@@ -391,6 +391,67 @@ body {
 
 .chevron-icon { transition: transform 0.2s; }
 .chevron-icon.rotated { transform: rotate(180deg); }
+
+.database-panel {
+  max-width: 900px;
+  margin: 28px auto 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
+}
+.database-panel-heading, .database-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.database-panel-heading h2 { margin: 3px 0 0; font-size: 18px; }
+.database-panel-eyebrow {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.database-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.database-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+.database-card strong { font-size: 13px; line-height: 1.4; }
+.database-card p {
+  margin: 10px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.database-card-meta { color: var(--text-dim); font-size: 11px; }
+.database-card-answer {
+  margin: 10px 0;
+  padding: 9px 10px;
+  border-left: 2px solid var(--green);
+  color: var(--text-muted);
+  background: rgba(34,197,94,0.05);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.database-save-status {
+  margin-top: 12px;
+  color: var(--green);
+  font-size: 13px;
+}
+.database-save-status.is-error { color: var(--red); }
+@media (max-width: 768px) {
+  .database-card-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -419,6 +480,7 @@ body {
         <button id="btnAnalyze" class="btn-cta" disabled>Разобрать запрос →</button>
       </div>
     </div>
+    <section id="databaseCards" class="database-panel" hidden></section>
   </div>
 
   <!-- STATE 2: ANALYSIS -->
@@ -443,6 +505,7 @@ body {
       <div class="col-right">
         <h2>Разбор</h2>
         <div class="summary-bar" id="summaryBar"></div>
+        <p id="databaseSaveStatus" class="database-save-status" hidden></p>
         <div id="contradictionsContainer"></div>
         <div id="categoriesContainer"></div>
         <div class="questions-section" id="questionsSection"></div>
@@ -704,6 +767,7 @@ body {
 <script src="./app/persistence.js"></script>
 <script src="./app/analysis.js"></script>
 <script src="./app/ai-client.js"></script>
+<script src="./app/database-client.js"></script>
 <script src="./app/render.js"></script>
 <script src="./app/main.js"></script>
 </body>

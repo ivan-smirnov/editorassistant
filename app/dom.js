@@ -20,7 +20,9 @@
       questionsSection: document.getElementById('questionsSection'),
       understandingContainer: document.getElementById('understandingContainer'),
       answersInput: document.getElementById('answersInput'),
-      accordionS3: document.getElementById('accordionS3')
+      accordionS3: document.getElementById('accordionS3'),
+      databaseCards: document.getElementById('databaseCards'),
+      databaseSaveStatus: document.getElementById('databaseSaveStatus')
     };
   }
 
