@@ -9,6 +9,7 @@
       screen1: document.getElementById('screen1'),
       screen2: document.getElementById('screen2'),
       screen3: document.getElementById('screen3'),
+      screenShowcase: document.getElementById('screenShowcase'),
       screenDesignSystem: document.getElementById('screenDesignSystem'),
       originalText: document.getElementById('originalText'),
       originalTextMobile: document.getElementById('originalTextMobile'),
@@ -19,7 +20,9 @@
       questionsSection: document.getElementById('questionsSection'),
       understandingContainer: document.getElementById('understandingContainer'),
       answersInput: document.getElementById('answersInput'),
-      accordionS3: document.getElementById('accordionS3')
+      accordionS3: document.getElementById('accordionS3'),
+      databaseCards: document.getElementById('databaseCards'),
+      databaseSaveStatus: document.getElementById('databaseSaveStatus')
     };
   }
 

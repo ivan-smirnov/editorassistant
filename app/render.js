@@ -112,6 +112,49 @@
     }).join('');
   }
 
+  function renderDatabaseCards(dom, cards) {
+    if (!dom.databaseCards || !Array.isArray(cards) || !cards.length) return;
+
+    dom.databaseCards.hidden = false;
+    dom.databaseCards.innerHTML = `
+      <div class="database-panel-heading">
+        <div>
+          <div class="database-panel-eyebrow">Локальная PostgreSQL</div>
+          <h2>Тестовые карточки из базы</h2>
+        </div>
+        <span class="pill pill-ai">${cards.length} карточки</span>
+      </div>
+      <div class="database-card-grid">
+        ${cards.map(card => `
+          <article class="database-card">
+            <div class="database-card-top">
+              <strong>${escapeHtml(card.title || 'Без названия')}</strong>
+              <span class="badge ${card.status === 'ready_for_approval' ? 'badge-green' : 'badge-red'}">
+                ${card.status === 'ready_for_approval' ? 'Можно согласовывать' : 'Есть пробелы'}
+              </span>
+            </div>
+            <p>${escapeHtml(card.summary || 'Разбор ещё не сохранён.')}</p>
+            ${card.latestAnswer ? `
+              <div class="database-card-answer">
+                Последний ответ: ${escapeHtml(card.latestAnswer)}
+              </div>
+            ` : ''}
+            <div class="database-card-meta">
+              Критичных пробелов: ${Number(card.criticalGapCount) || 0}
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderDatabaseSaveStatus(dom, message, isError = false) {
+    if (!dom.databaseSaveStatus) return;
+    dom.databaseSaveStatus.hidden = false;
+    dom.databaseSaveStatus.textContent = message;
+    dom.databaseSaveStatus.classList.toggle('is-error', isError);
+  }
+
   function renderUnderstanding(dom, state) {
     if (state.analysisSource === 'ai' && state.aiUnderstanding.length) {
       renderAiUnderstanding(dom, state);
@@ -173,6 +216,8 @@
   window.EditorAssistantRender = {
     renderAnalysis,
     renderSupplement,
-    renderUnderstanding
+    renderUnderstanding,
+    renderDatabaseCards,
+    renderDatabaseSaveStatus
   };
 })(window);

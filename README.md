@@ -5,7 +5,7 @@
 ## О проекте
 
 Проект сделан как статический MVP для редакторов: интерфейс и основная логика находятся в одном файле `Assistant.html`, без сборки.  
-Для AI-анализа используется Netlify Function (`netlify/functions/analyze-brief.js`), которая безопасно обращается к OpenAI через `OPENAI_API_KEY` из окружения. Приложение сохраняет рабочее состояние в `localStorage` (`editorassistant.v1`) и помогает пройти путь «ввод запроса → разбор → уточнения → понимание задачи».
+Для AI-анализа используется Netlify Function (`netlify/functions/analyze-brief.js`), которая безопасно обращается к OpenAI через `OPENAI_API_KEY` из окружения. Приложение сохраняет рабочее состояние в `localStorage` (`editorassistant.v1`) и помогает пройти путь «ввод запроса → разбор → уточнения → понимание задачи». Для локальной разработки можно дополнительно подключить PostgreSQL: тестовые карточки читаются и ответы сохраняются через отдельную Netlify Function.
 
 ```text
 [Браузер: Assistant.html]
@@ -23,6 +23,12 @@
         |
         v
 [UI state + localStorage: editorassistant.v1]
+
+[Браузер] -- GET/POST --> [task-cards.js]
+                              |
+                              | DATABASE_URL только на сервере
+                              v
+                    [Локальная PostgreSQL]
 ```
 
 ### Стек и принципы
@@ -30,7 +36,7 @@
 - **Frontend**: HTML + CSS + Vanilla JS (single-file в `Assistant.html`).
 - **Serverless**: Netlify Function `analyze-brief` для проксирования AI-запроса.
 - **Хостинг**: Netlify (`netlify.toml`, редирект `/` на `Assistant.html`).
-- **Данные**: локальное хранение только состояния интерфейса в `localStorage`.
+- **Данные**: состояние интерфейса в `localStorage`; опциональная локальная PostgreSQL для тестовых карточек и ответов.
 - **AI-анализ**: OpenAI Responses API через серверную функцию (ключ не попадает во фронтенд).
 - **Вспомогательный CLI-скрипт**: `ask_ai.py` (Python + `python-dotenv` + `openai`) — не участвует в основном пользовательском сценарии.
 
@@ -39,6 +45,8 @@
 Скачайте репозиторий или клонируйте его, затем откройте файл **`Assistant.html`** в браузере (двойной клик или «Открыть с помощью…» → браузер).
 
 Отдельный сервер и установка зависимостей **не нужны**, если достаточно локального эвристического анализа. При таком запуске AI-функция недоступна, и приложение автоматически использует fallback-режим.
+
+Для запуска с локальной PostgreSQL используйте [инструкцию базы](database/README.md). Настройка подключения хранится в игнорируемом `.env.database.local`, поэтому адрес базы не попадает в репозиторий.
 
 ```text
 [Открыть Assistant.html как файл]
@@ -214,6 +222,7 @@ Telegram-уведомления работают только на сервер�
 |------|------------|
 | `Assistant.html` | Разметка, стили, логика — один файл |
 | `netlify/functions/analyze-brief.js` | Serverless-функция для AI-разбора через OpenAI |
+| `netlify/functions/task-cards.js` | Локальное чтение карточек и сохранение ответов в PostgreSQL |
 | `netlify/functions/lib/telegram-notifier.js` | Серверная отправка Telegram-уведомлений о сбоях |
 | `netlify/functions/monitor-homepage.js` | Scheduled-проверка production URL и Telegram-алерт при не-`200` |
 | `netlify/functions/monitor-heartbeat.js` | Ежедневное Telegram-сообщение, что мониторинг жив |
@@ -221,6 +230,7 @@ Telegram-уведомления работают только на сервер�
 | `netlify.toml` | Настройки публикации на Netlify и редирект `/` |
 | `ask_ai.py` | Вспомогательная CLI-утилита для тестового запроса к OpenAI |
 | `.env.example` | Шаблон локальных переменных окружения без секретных значений |
+| `database/` | Схема PostgreSQL, тестовые данные и инструкция локального запуска |
 | `README.md` | Инструкция по запуску, AI-режиму и публикации |
 | `PRODUCT_SCENARIOS.md` | Источник правды по текущим продуктовым сценариям MVP |
 | `spec.md` | PRD, требования и текущий стек |

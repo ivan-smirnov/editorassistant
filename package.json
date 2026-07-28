@@ -1,0 +1,13 @@
+{
+  "name": "editor-assistant",
+  "private": true,
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "netlify-cli": "^23.1.3"
+  }
+}
