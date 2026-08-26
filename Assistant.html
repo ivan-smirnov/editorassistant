@@ -61,7 +61,11 @@ body {
 .header-left { display: flex; align-items: center; gap: 8px; }
 .header-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 .header-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.header-title-home { display: none; }
 .header-badge { font-size: 12px; color: var(--text-dim); border: 1px solid rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 6px; }
+body:has(#screen1.active) .header-title-default { display: none; }
+body:has(#screen1.active) .header-title-home { display: inline; }
+body:has(#screen1.active) .header-badge { display: none; }
 
 /* CONTAINER */
 .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; padding-top: 52px; }
@@ -72,10 +76,216 @@ body {
 .screen.visible { opacity: 1; transform: translateY(0); transition: opacity 0.3s ease, transform 0.3s ease; }
 
 /* INPUT SCREEN */
-.input-screen { padding: 40px 0 80px; }
-.input-wrapper { width: 100%; max-width: 720px; }
-.input-wrapper h1 { font-size: 32px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 12px; }
-.input-wrapper .subtitle { font-size: 15px; color: var(--text-muted); margin-bottom: 28px; }
+.input-screen { padding: 56px 0 80px; }
+.input-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+  grid-template-areas:
+    "intro form"
+    "steps form"
+    "preview preview";
+  gap: 28px 48px;
+  align-items: start;
+}
+.input-intro { grid-area: intro; padding-top: 4px; }
+.input-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+  color: #8ebcff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.input-eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--accent);
+}
+.input-intro h1 {
+  max-width: 460px;
+  margin-bottom: 18px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+.input-intro .subtitle {
+  max-width: 450px;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.input-form-card {
+  grid-area: form;
+  padding: 22px;
+  border: 1px solid var(--border-hover);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.22);
+}
+.input-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.input-label { font-size: 15px; font-weight: 600; color: var(--text); }
+.input-field-kind { font-size: 12px; color: var(--text-muted); text-align: right; }
+.input-form-card .textarea-main {
+  min-height: 240px;
+  max-height: 360px;
+  background: var(--bg);
+  border-color: var(--border-hover);
+}
+.input-form-card .textarea-main:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(59,130,246,0.42);
+  outline-offset: 2px;
+}
+.input-helper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 9px;
+}
+.input-hint,
+.input-helper-row .char-count { font-size: 12px; color: var(--text-muted); }
+.input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+.input-screen .btn-demo,
+.input-screen .btn-cta { min-height: 44px; }
+.input-screen .btn-demo { color: var(--text-muted); }
+.input-screen .btn-cta { background: var(--accent-hover); }
+.input-screen .btn-cta:hover:not(:disabled) {
+  background: var(--accent-hover);
+  filter: brightness(0.9);
+}
+.input-screen button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.input-steps {
+  grid-area: steps;
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+.input-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.input-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-hover);
+  border-radius: 50%;
+  color: #8ebcff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.input-step strong { display: block; margin-bottom: 1px; font-size: 14px; font-weight: 600; }
+.input-step p { color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+.result-preview {
+  grid-area: preview;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 18px 0;
+  border-top: 1px solid var(--border-hover);
+  border-bottom: 1px solid var(--border);
+}
+.result-preview-kicker {
+  margin-bottom: 3px;
+  color: #8ebcff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.result-preview h2 { font-size: 15px; font-weight: 600; line-height: 1.35; }
+.result-preview-content { min-width: 0; }
+.result-statuses {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+}
+.result-status {
+  min-width: 0;
+  padding: 0 16px;
+  border-left: 1px solid var(--border-hover);
+}
+.result-status:first-child { padding-left: 0; border-left: 0; }
+.result-status-label { display: block; color: var(--text-muted); font-size: 11px; }
+.result-status-value { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 13px; font-weight: 600; }
+.result-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.result-status-ready { color: var(--green); }
+.result-status-partial { color: var(--yellow); }
+.result-preview-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.result-preview-note-mark { color: var(--orange); font-weight: 700; }
+
+@media (max-width: 900px) {
+  .input-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "intro"
+      "form"
+      "steps"
+      "preview";
+    gap: 26px;
+  }
+  .input-intro h1,
+  .input-intro .subtitle { max-width: 680px; }
+}
+
+@media (max-width: 520px) {
+  .input-screen { padding: 36px 0 64px; }
+  .input-intro h1 { font-size: 32px; line-height: 1.16; letter-spacing: -0.025em; }
+  .input-form-card { padding: 18px; }
+  .input-field-head { display: block; }
+  .input-field-kind { display: block; margin-top: 2px; text-align: left; }
+  .input-form-card .textarea-main { min-height: 220px; }
+  .input-actions { display: grid; grid-template-columns: 1fr; }
+  .input-actions .btn-demo,
+  .input-actions .btn-cta { width: 100%; justify-content: center; }
+  .result-preview { grid-template-columns: 1fr; gap: 12px; }
+  .result-statuses { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+  .result-status:nth-child(3) { padding-left: 0; border-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input-screen,
+  .input-screen *,
+  .input-screen *::before,
+  .input-screen *::after { animation: none !important; transition: none !important; }
+}
 
 .pill {
   display: inline-flex;
@@ -109,8 +319,6 @@ body {
 .textarea-main::placeholder { color: var(--text-dim); }
 .textarea-main:focus { border-color: var(--border-hover); }
 
-.input-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; flex-wrap: wrap; gap: 10px; }
-.input-footer-left { display: flex; align-items: center; gap: 14px; }
 .char-count { font-size: 13px; color: var(--text-dim); }
 
 /* BUTTONS */
@@ -459,7 +667,10 @@ body {
 <header class="header">
   <div class="header-left">
     <div class="header-dot"></div>
-    <span class="header-title">Ассистент</span>
+    <span class="header-title">
+      <span class="header-title-default">Ассистент</span>
+      <span class="header-title-home">Ассистент для редактора</span>
+    </span>
   </div>
   <span class="header-badge">MVP</span>
 </header>
@@ -468,17 +679,59 @@ body {
 
   <!-- STATE 1: INPUT -->
   <div id="screen1" class="screen input-screen active">
-    <div class="input-wrapper">
-      <h1>Проверьте запрос на&nbsp;готовность к&nbsp;работе</h1>
-      <p class="subtitle">Вставьте всё, что&nbsp;получили от&nbsp;клиента: письмо, расшифровку звонка, сообщение из&nbsp;мессенджера. Ассистент покажет, чего не&nbsp;хватает, и&nbsp;соберёт понимание задачи.</p>
-      <textarea id="mainInput" class="textarea-main" placeholder="Напишите статью про наш продукт для HR-директоров. Нам важно показать, что мы лидеры рынка. Дедлайн — пятница."></textarea>
-      <div class="input-footer">
-        <div class="input-footer-left">
-          <span id="charCount" class="char-count">0 символов</span>
-          <button class="btn-demo" id="btnDemo">▶ Вставить демо</button>
+    <div class="input-layout">
+      <section class="input-intro" aria-labelledby="inputTitle">
+        <p class="input-eyebrow">Для редакторов и&nbsp;тех, кто собирает вводные у&nbsp;клиента</p>
+        <h1 id="inputTitle">Проверьте бриф до&nbsp;того, как начинать текст</h1>
+        <p class="subtitle">Ассистент находит пробелы и&nbsp;противоречия, собирает вопросы клиенту и&nbsp;черновик понимания задачи для согласования.</p>
+      </section>
+
+      <section class="input-form-card" aria-labelledby="mainInputLabel">
+        <div class="input-field-head">
+          <label class="input-label" id="mainInputLabel" for="mainInput">Что прислал клиент</label>
+          <span class="input-field-kind">Письмо, чат или расшифровка</span>
         </div>
-        <button id="btnAnalyze" class="btn-cta" disabled>Разобрать запрос →</button>
-      </div>
+        <textarea id="mainInput" class="textarea-main" aria-describedby="mainInputHint charCount" placeholder="Например: нужна экспертная статья для HR-директоров. Цель — объяснить наш подход. Дедлайн — пятница."></textarea>
+        <div class="input-helper-row">
+          <span id="mainInputHint" class="input-hint">Минимум 20 символов</span>
+          <span id="charCount" class="char-count" aria-live="polite">0 символов</span>
+        </div>
+        <div class="input-actions">
+          <button class="btn-demo" id="btnDemo">Вставить пример</button>
+          <button id="btnAnalyze" class="btn-cta" disabled>Разобрать запрос →</button>
+        </div>
+      </section>
+
+      <ol class="input-steps" aria-label="Как работает ассистент">
+        <li class="input-step">
+          <span class="input-step-number" aria-hidden="true">1</span>
+          <div><strong>Вставьте запрос</strong><p>Письмо, сообщение или расшифровку.</p></div>
+        </li>
+        <li class="input-step">
+          <span class="input-step-number" aria-hidden="true">2</span>
+          <div><strong>Получите разбор</strong><p>Карту готовности, пробелы и&nbsp;вопросы.</p></div>
+        </li>
+        <li class="input-step">
+          <span class="input-step-number" aria-hidden="true">3</span>
+          <div><strong>Добавьте ответы</strong><p>И&nbsp;соберите задачу для согласования.</p></div>
+        </li>
+      </ol>
+
+      <aside class="result-preview" aria-labelledby="resultPreviewTitle">
+        <div>
+          <p class="result-preview-kicker">Пример результата</p>
+          <h2 id="resultPreviewTitle">Карта готовности брифа</h2>
+        </div>
+        <div class="result-preview-content">
+          <ul class="result-statuses">
+            <li class="result-status"><span class="result-status-label">Контекст</span><span class="result-status-value result-status-ready"><span class="result-status-dot"></span>Есть</span></li>
+            <li class="result-status"><span class="result-status-label">Задача</span><span class="result-status-value result-status-ready"><span class="result-status-dot"></span>Есть</span></li>
+            <li class="result-status"><span class="result-status-label">Результат</span><span class="result-status-value result-status-partial"><span class="result-status-dot"></span>Частично</span></li>
+            <li class="result-status"><span class="result-status-label">Сроки</span><span class="result-status-value result-status-ready"><span class="result-status-dot"></span>Есть</span></li>
+          </ul>
+          <p class="result-preview-note"><span class="result-preview-note-mark">!</span><span>Ассистент отдельно подсветит противоречия — например, разные требования к&nbsp;объёму.</span></p>
+        </div>
+      </aside>
     </div>
     <section id="databaseCards" class="database-panel" hidden></section>
   </div>
