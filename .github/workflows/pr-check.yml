@@ -1,4 +1,4 @@
-name: Pull Request Check
+name: Checks and Deploy
 
 on:
   pull_request:
@@ -108,3 +108,68 @@ jobs:
             process.exit(1);
           });
           NODE
+
+  deploy-production:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    needs: static-checks
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify deployment secrets are configured
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          missing=0
+
+          for secret_name in NETLIFY_AUTH_TOKEN NETLIFY_SITE_ID OPENAI_API_KEY; do
+            secret_value="${!secret_name:-}"
+
+            if [ -z "${secret_value}" ]; then
+              echo "${secret_name} GitHub Secret is not configured."
+              missing=1
+              continue
+            fi
+
+            echo "::add-mask::${secret_value}"
+          done
+
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "Deployment secrets are configured."
+
+      - name: Sync OPENAI_API_KEY to Netlify production functions
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          npx --yes netlify-cli@26.1.0 env:set OPENAI_API_KEY "${OPENAI_API_KEY}" \
+            --context production \
+            --scope functions \
+            --secret \
+            --force \
+            --site "${NETLIFY_SITE_ID}" \
+            --auth "${NETLIFY_AUTH_TOKEN}"
+
+      - name: Deploy to Netlify production
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          npx --yes netlify-cli@26.1.0 deploy \
+            --prod \
+            --no-build \
+            --dir . \
+            --functions netlify/functions \
+            --site "${NETLIFY_SITE_ID}" \
+            --auth "${NETLIFY_AUTH_TOKEN}" \
+            --message "GitHub Actions production deploy ${GITHUB_SHA}"
